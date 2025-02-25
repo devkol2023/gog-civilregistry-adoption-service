@@ -21,6 +21,7 @@ import com.gog.civilregistry.adoption.model.common.ServiceResponse;
 import com.gog.civilregistry.adoption.service.AdoptionService;
 import com.gog.civilregistry.adoption.service.WorkflowService;
 import com.gog.civilregistry.adoption.util.CommonConstants;
+import com.gog.civilregistry.adoption.model.VaultRequest;
 
 @RestController
 @RequestMapping("/api")
@@ -124,6 +125,11 @@ public class AdoptionController {
 	@PostMapping("/trackAppUser")
 	public ServiceResponse trackAppUser(@RequestBody TrackAppUserRequest request) {
 		return adoptionService.trackAppUser(request);
+	}
+	
+	@PostMapping("/getVault")
+	public ServiceResponse getVault(@RequestBody VaultRequest request) {
+		return adoptionService.getVault(request);
 	}
 	
 }

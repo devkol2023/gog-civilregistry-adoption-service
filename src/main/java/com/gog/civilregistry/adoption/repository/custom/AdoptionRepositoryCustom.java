@@ -16,6 +16,7 @@ import com.gog.civilregistry.adoption.model.ProcessApplicationModel;
 import com.gog.civilregistry.adoption.model.SearchApplicationARDto;
 import com.gog.civilregistry.adoption.model.TrackAppUserDto;
 import com.gog.civilregistry.adoption.model.UpdateCertificateFileRequest;
+import com.gog.civilregistry.adoption.model.VaultResponse;
 import com.gog.civilregistry.adoption.model.WorkflowUpdateModel;
 
 import jakarta.persistence.EntityManager;
@@ -376,6 +377,7 @@ public class AdoptionRepositoryCustom {
 
 	    return trackApplicationUserList;
 	}
+
 
 
 
