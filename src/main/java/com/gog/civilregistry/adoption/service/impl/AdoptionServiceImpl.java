@@ -28,6 +28,9 @@ import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatusResponse;
 import com.gog.civilregistry.adoption.model.ChildInformation;
 import com.gog.civilregistry.adoption.model.DeletedFileListModel;
+import com.gog.civilregistry.adoption.model.DocListDto;
+import com.gog.civilregistry.adoption.model.DocListRequest;
+import com.gog.civilregistry.adoption.model.DocListResponse;
 import com.gog.civilregistry.adoption.model.FatherInformation;
 import com.gog.civilregistry.adoption.model.GeneralInformation;
 import com.gog.civilregistry.adoption.model.MotherInformation;
@@ -370,12 +373,10 @@ public class AdoptionServiceImpl implements AdoptionService {
 				modelMapper.map(request.getMotherInformation(), applicationEntity);
 				modelMapper.map(request.getGeneralInformation(), applicationEntity);
 				if (request.getChildInformation().getDob() != null)
-					applicationEntity
-							.setChildDateOfBirth(formatter.parse(request.getChildInformation().getDob()));
+					applicationEntity.setChildDateOfBirth(formatter.parse(request.getChildInformation().getDob()));
 
 				if (request.getGeneralInformation().getCod() != null)
-					applicationEntity
-							.setCourtOrderDate(formatter.parse(request.getGeneralInformation().getCod()));
+					applicationEntity.setCourtOrderDate(formatter.parse(request.getGeneralInformation().getCod()));
 
 				modelMapper.map(request.getChildInformation(), applicationEntity);
 
@@ -413,12 +414,10 @@ public class AdoptionServiceImpl implements AdoptionService {
 				modelMapper.map(request.getMotherInformation(), applicationEntity);
 				modelMapper.map(request.getGeneralInformation(), applicationEntity);
 				if (request.getChildInformation().getDob() != null)
-					applicationEntity
-							.setChildDateOfBirth(formatter.parse(request.getChildInformation().getDob()));
+					applicationEntity.setChildDateOfBirth(formatter.parse(request.getChildInformation().getDob()));
 
 				if (request.getGeneralInformation().getCod() != null)
-					applicationEntity
-							.setCourtOrderDate(formatter.parse(request.getGeneralInformation().getCod()));
+					applicationEntity.setCourtOrderDate(formatter.parse(request.getGeneralInformation().getCod()));
 				modelMapper.map(request.getChildInformation(), applicationEntity);
 
 				applicationEntity.setUpdatedBy(request.getLoginUserId());
@@ -761,12 +760,10 @@ public class AdoptionServiceImpl implements AdoptionService {
 				modelMapper.map(request.getMotherInformation(), applicationEntity);
 				modelMapper.map(request.getGeneralInformation(), applicationEntity);
 				if (request.getChildInformation().getDob() != null)
-					applicationEntity
-							.setChildDateOfBirth(formatter.parse(request.getChildInformation().getDob()));
+					applicationEntity.setChildDateOfBirth(formatter.parse(request.getChildInformation().getDob()));
 
 				if (request.getGeneralInformation().getCod() != null)
-					applicationEntity
-							.setCourtOrderDate(formatter.parse(request.getGeneralInformation().getCod()));
+					applicationEntity.setCourtOrderDate(formatter.parse(request.getGeneralInformation().getCod()));
 
 				modelMapper.map(request.getChildInformation(), applicationEntity);
 
@@ -803,12 +800,10 @@ public class AdoptionServiceImpl implements AdoptionService {
 				modelMapper.map(request.getMotherInformation(), applicationEntity);
 				modelMapper.map(request.getGeneralInformation(), applicationEntity);
 				if (request.getChildInformation().getDob() != null)
-					applicationEntity
-							.setChildDateOfBirth(formatter.parse(request.getChildInformation().getDob()));
+					applicationEntity.setChildDateOfBirth(formatter.parse(request.getChildInformation().getDob()));
 
 				if (request.getGeneralInformation().getCod() != null)
-					applicationEntity
-							.setCourtOrderDate(formatter.parse(request.getGeneralInformation().getCod()));
+					applicationEntity.setCourtOrderDate(formatter.parse(request.getGeneralInformation().getCod()));
 				modelMapper.map(request.getChildInformation(), applicationEntity);
 
 				applicationEntity.setUpdatedBy(request.getLoginUserId());
@@ -872,6 +867,51 @@ public class AdoptionServiceImpl implements AdoptionService {
 		}
 		logger.info("Exit Method " + "submitAdoptionRegistration");
 		return response;
+	}
+
+	@Override
+	public ServiceResponse getDocList(DocListRequest request) {
+		logger.info("Entry Method: getDocList");
+		ServiceResponse response = new ServiceResponse();
+
+		try {
+			Integer applicationTypeId = request.getApplicationTypeId();
+			// List<DocListDto> docList =
+			// deathRepositoryCustom.getDocumentList(applicationTypeId);
+
+			List<Object[]> resultList = adoptionDetailRepository.getDocList(request.getApplicationRegisterId(),
+					request.getApplicationTypeId(), request.getLoggedInRoleCode(), request.getCitizenId());
+
+			List<DocListDto> docList = resultList.stream().map(result -> {
+				Object[] row = (Object[]) result;
+				DocListDto dto = new DocListDto();
+				dto.setDocTypeId(row[0] != null ? (Integer) row[0] : null);
+				dto.setDataValue(row[1] != null ? (String) row[1] : "");
+				dto.setDataDescription(row[2] != null ? (String) row[2] : "");
+				dto.setMasterDataTypeId(row[3] != null ? (Integer) row[3] : null);
+				dto.setCitizenId(row[4] != null ? (Integer) row[4] : null);
+				dto.setDocName(row[5] != null ? (String) row[5] : null);
+				dto.setDocSubject(row[6] != null ? (String) row[6] : null);
+				dto.setApplicationDocDmsId(row[7] != null ? (String) row[7] : null);
+				dto.setIsGeneratedBySystem(row[8] != null ? (Short) row[8] : null);
+				return dto;
+			}).collect(Collectors.toList());
+
+			DocListResponse docListResponse = new DocListResponse();
+			docListResponse.setDocListResponse(docList);
+
+			response.setStatus(CommonConstants.SUCCESS_STATUS);
+			response.setMessage(CommonConstants.SUCCESS);
+			response.setResponseObject(docListResponse);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.setStatus(CommonConstants.ERROR_STATUS);
+			response.setMessage("An error occurred while processing the request.");
+		}
+		logger.info("Exit Method " + " getDocList");
+		return response;
+
 	}
 
 }

@@ -19,4 +19,6 @@ public interface AdoptionService {
 
 	ServiceResponse submitAdoptionRegistration(MultipartFile[] attachments, String request);
 
+	ServiceResponse getDocList(DocListRequest request);
+
 }

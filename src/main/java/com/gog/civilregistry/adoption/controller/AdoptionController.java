@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
 import com.gog.civilregistry.adoption.model.ClaimApplicationWfRequest;
+import com.gog.civilregistry.adoption.model.DocListRequest;
 import com.gog.civilregistry.adoption.model.GeneralInformation;
 import com.gog.civilregistry.adoption.model.GetWfNextStageRequest;
 import com.gog.civilregistry.adoption.model.GetWfNextUserRequest;
@@ -78,6 +79,11 @@ public class AdoptionController {
 	@PostMapping("/getAdoptionRegistrationDetails")
 	public ServiceResponse getAR(@RequestBody GeneralInformation request) {
 		return adoptionService.getAR(request);
+	}
+
+	@PostMapping("/getDocList")
+	public ServiceResponse getDocList(@RequestBody DocListRequest request) {
+		return adoptionService.getDocList(request);
 	}
 
 	@PostMapping("/saveAdoptionRegistrationDraft")
