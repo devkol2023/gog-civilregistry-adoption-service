@@ -1,6 +1,5 @@
 package com.gog.civilregistry.adoption.entity;
 
-import java.sql.Timestamp;
 import java.util.Date;
 
 import jakarta.persistence.Column;
@@ -12,6 +11,7 @@ import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import jakarta.persistence.Transient;
 import lombok.Data;
 
 /**
@@ -94,6 +94,12 @@ public class ApplicationAdoptionDetailEntity extends BaseEntity {
 
 	@Column(name = "father_parish")
 	private Short fatherParish;
+
+	@Column(name = "father_village_town")
+	private Integer fatherVillageTown;
+
+	@Column(name = "mother_village_town")
+	private Integer motherVillageTown;
 
 	@Column(name = "father_qualification")
 	private String fatherQualification;

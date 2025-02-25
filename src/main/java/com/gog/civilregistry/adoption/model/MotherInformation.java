@@ -16,12 +16,11 @@ public class MotherInformation {
 	private String motherQualification;
 	private String motherOccupation;
 	private String motherReligion;
-	private Short previousLiveBirths; // missing in DB
+
 	private Integer motherCitizenId; // conflictiong DB type
 	private String motherCivilRegistryNumber;
 	private String motherMobileNumber; // conflictiong DB type
 	private String motherEmailId;
-	private Short isMotherLive;
 	private Integer motherVillageTown;
 
 }

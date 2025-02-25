@@ -93,4 +93,18 @@ public class AdoptionController {
 		}
 		return response;
 	}
+
+	@PostMapping("/submitAdoptionRegistration")
+	public ServiceResponse submitAdoptionRegistration(
+			@RequestParam(value = "attachments", required = false) MultipartFile[] attachments, String request) {
+		// SaveNODDraftRequest
+		ServiceResponse response = new ServiceResponse();
+		try {
+			response = adoptionService.submitAdoptionRegistration(attachments, request);
+		} catch (Exception e) {
+			response.setStatus(CommonConstants.ERROR_STATUS);
+			response.setMessage(CommonConstants.ERROR_MSG);
+		}
+		return response;
+	}
 }
