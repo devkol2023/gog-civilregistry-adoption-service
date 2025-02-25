@@ -22,4 +22,7 @@ public interface AdoptionApplicationDocumentRepository extends JpaRepository<Ado
 			+ "			where marriage_application_doc_id in (:applicationDocId)", nativeQuery = true)
 	void updateFileIdIsActive(List<Integer> applicationDocId);
 
+	List<AdoptionApplicationDocumentEntity> findByApplicationRegisterIdAndIsActive(Long applicationRegisterId,
+			boolean b);
+
 }

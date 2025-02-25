@@ -3,6 +3,7 @@ package com.gog.civilregistry.adoption.service.impl;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -18,11 +19,15 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gog.civilregistry.adoption.dto.GetCivilRegistryNumberDTO;
 import com.gog.civilregistry.adoption.entity.AdoptionApplicationDocumentEntity;
 import com.gog.civilregistry.adoption.entity.ApplicationAdoptionDetailEntity;
 import com.gog.civilregistry.adoption.entity.ApplicationRegisterEntity;
 import com.gog.civilregistry.adoption.model.ChildInformation;
 import com.gog.civilregistry.adoption.model.DeletedFileListModel;
+import com.gog.civilregistry.adoption.model.FatherInformation;
+import com.gog.civilregistry.adoption.model.GeneralInformation;
+import com.gog.civilregistry.adoption.model.MotherInformation;
 import com.gog.civilregistry.adoption.model.NewFileUploadResponse;
 import com.gog.civilregistry.adoption.model.ProcessApplicationModel;
 import com.gog.civilregistry.adoption.model.SaveARDraftRequest;
@@ -412,6 +417,106 @@ public class AdoptionServiceImpl implements AdoptionService {
 			throw new RuntimeException("Error during saving AR draft, rolling back transaction", e);
 		}
 		logger.info("Exit Method " + "saveARDraft");
+		return response;
+	}
+
+	@Override
+	public ServiceResponse getAR(GeneralInformation request) {
+		logger.info("Entry Method " + " getAR");
+		ServiceResponse response = new ServiceResponse();
+
+		ChildInformation childInformation = new ChildInformation();
+		List<ChildInformation> childResp = new ArrayList<ChildInformation>();
+		FatherInformation fatherInformation = new FatherInformation();
+
+		MotherInformation motherInformation = new MotherInformation();
+
+		GeneralInformation generalInformation = new GeneralInformation();
+		List<UploadFileData> fileDataList = new ArrayList<UploadFileData>();
+		SaveARDraftResponse res = new SaveARDraftResponse();
+		ApplicationRegisterEntity applicationRegisterEntity = new ApplicationRegisterEntity();
+		ApplicationAdoptionDetailEntity applicationAR = new ApplicationAdoptionDetailEntity();
+
+		SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+//		String formattedDate = formatter.format(currentDate);
+
+		try {
+			applicationRegisterEntity = applicationRegisterRepository.findByApplicationNo(request.getApplicationNo());
+			applicationAR = adoptionDetailRepository
+					.findByApplicationRegisterId(applicationRegisterEntity.getApplicationRegisterId());
+			List<AdoptionApplicationDocumentEntity> docEntityList = documentRepository
+					.findByApplicationRegisterIdAndIsActive(applicationRegisterEntity.getApplicationRegisterId(), true);
+			// process document entity list to model - upload file data
+			for (AdoptionApplicationDocumentEntity docEntity : docEntityList) {
+				UploadFileData fileData = new UploadFileData();
+				fileData.setFileName(docEntity.getApplicationDocName());
+				fileData.setApplicationRegisterId(docEntity.getApplicationRegisterId());
+				fileData.setApplicationDocDmsId(docEntity.getApplicationDocDmsId());
+				fileData.setApplicationDocId(docEntity.getApplicationDocId());
+				fileData.setFileSubject(docEntity.getApplicationDocSubject());
+				fileData.setDocTypeId(docEntity.getDocumentTypeId());
+				fileData.setReferenceId(docEntity.getApplicationDocDmsId());
+				fileData.setDocTypeCode(docEntity.getDocumentTypeCode());
+				fileDataList.add(fileData);
+			}
+
+			fatherInformation = modelMapper.map(applicationAR, FatherInformation.class);
+
+			motherInformation = modelMapper.map(applicationAR, MotherInformation.class);
+
+			generalInformation = modelMapper.map(applicationAR, GeneralInformation.class);
+
+			childInformation = modelMapper.map(applicationAR, ChildInformation.class);
+
+			List<Integer> citizenIds = Arrays.asList(fatherInformation.getFatherCitizenId(),
+					motherInformation.getMotherCitizenId(), childInformation.getChildCitizenId()
+
+			);
+
+			List<GetCivilRegistryNumberDTO> civilRegNoDetailsList = applicationRegisterRepository
+					.getCivilRegNoFromCitizenId(citizenIds);
+
+			for (GetCivilRegistryNumberDTO citizenDetails : civilRegNoDetailsList) {
+
+				if (citizenDetails.getCitizen_id().equals(fatherInformation.getFatherCitizenId())) {
+					fatherInformation.setFatherCivilRegistryNumber(citizenDetails.getCivilRegistryNumber());
+				}
+
+				if (citizenDetails.getCitizen_id().equals(motherInformation.getMotherCitizenId())) {
+					motherInformation.setMotherCivilRegistryNumber(citizenDetails.getCivilRegistryNumber());
+				}
+				if (citizenDetails.getCitizen_id().equals(childInformation.getChildCitizenId())) {
+					childInformation.setChildCivilRegistryNumber(citizenDetails.getCivilRegistryNumber());
+				}
+
+			}
+
+//			InstituteProjection proj = birthRegisterRepository.findInstituteById(generalInformation.getInstituteId());
+//			generalInformation.setInstituteName(proj.getInstituteName());
+
+			if (applicationAR.getCourtOrderDate() != null)
+				generalInformation.setCourtOrderDate(formatter.format(applicationAR.getCourtOrderDate()));
+			if (applicationAR.getChildDateOfBirth() != null)
+				childInformation.setChildDateOfBirth(formatter.format(applicationAR.getChildDateOfBirth()));
+
+			generalInformation.setCurrentStageId(applicationRegisterEntity.getCurrentStatusId());
+
+			res.setFatherInformation(fatherInformation);
+			res.setChildInformation(childInformation);
+			res.setMotherInformation(motherInformation);
+			res.setGeneralInformation(generalInformation);
+			res.setUploadFileData(fileDataList);
+
+			response.setStatus(CommonConstants.SUCCESS_STATUS);
+			response.setMessage(CommonConstants.SUCCESS_MSG);
+			response.setResponseObject(res);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.setStatus(CommonConstants.ERROR_STATUS);
+			response.setMessage("An error occurred while processing the request.");
+		}
+		logger.info("Exit Method " + " getAR");
 		return response;
 	}
 
