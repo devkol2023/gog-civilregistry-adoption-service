@@ -71,7 +71,7 @@ public class ApplicationAdoptionDetailEntity extends BaseEntity {
 	private Date courtOrderDate;
 
 	@Column(name = "entry_no")
-	private Integer entryNo;
+	private String entryNo;
 
 	@Column(name = "father_address")
 	private String fatherAddress;

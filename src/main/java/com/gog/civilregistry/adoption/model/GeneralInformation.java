@@ -12,7 +12,7 @@ public class GeneralInformation {
 //	private String instituteAddress;
 	private Integer instituteParish;
 	private Long applicationRegisterId;
-	private Long entryNo;
+	private String entryNo;
 	private Long nodEntryNo;
 	private String marginalNote;
 	private String modeOfSignature;
