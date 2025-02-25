@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gog.civilregistry.adoption.model.ProcessApplicationModel;
+import com.gog.civilregistry.adoption.model.SearchApplicationARDto;
+import com.gog.civilregistry.adoption.model.TrackAppUserDto;
 import com.gog.civilregistry.adoption.model.UpdateCertificateFileRequest;
 import com.gog.civilregistry.adoption.model.WorkflowUpdateModel;
 
@@ -237,6 +239,142 @@ public class AdoptionRepositoryCustom {
 		response.put("re_msg", reMsg);
 
 		return response;
+	}
+	
+	public List<SearchApplicationARDto> searchApplicationAR(String childName, String motherName, String fatherName, 
+            Date dateOfBirth, String applicationNumber, Integer parishId, Integer genderId) {
+
+		StringBuilder sqlQuery = new StringBuilder();
+        sqlQuery.append("SELECT tar.application_register_id AS applicationRegisterId, ")
+                .append("tar.application_no AS applicationNumber, ")
+                .append("concat_ws(', ', taad.child_surname, concat_ws(' ', taad.child_first_name, taad.child_middle_name)) AS childName, ")
+                .append("concat_ws(', ', taad.mother_surname, concat_ws(' ', taad.mother_first_name, taad.mother_middle_name)) AS motherName, ")
+                .append("concat_ws(', ', taad.father_surname, concat_ws(' ', taad.father_first_name, taad.father_middle_name)) AS fatherName, ")
+                .append("TO_CHAR(taad.child_date_of_birth, 'DD/MM/YYYY') AS dateOfBirth, ")
+                .append("mg.geography_name AS parishOfBirth, ")
+                .append("mdv.data_description AS gender ")
+                .append("FROM applications.t_application_register tar ")
+                .append("INNER JOIN adoption.t_application_adoption_details taad ON tar.application_register_id = taad.application_register_id ")
+                .append("LEFT JOIN masters.m_geography mg ON mg.geography_id = taad.child_parish ")
+                .append("LEFT JOIN masters.m_master_data_value mdv ON mdv.master_data_value_id = taad.child_gender ")
+                .append("WHERE 1=1 ");
+
+        
+        if (applicationNumber != null && !applicationNumber.trim().isEmpty()) {
+            sqlQuery.append(" AND tar.application_no = :applicationNumber ");
+        }
+        if (childName != null && !childName.trim().isEmpty()) {
+            sqlQuery.append(" AND LOWER(taad.child_first_name) = LOWER(:childName) ");
+        }
+        if (motherName != null && !motherName.trim().isEmpty()) {
+            sqlQuery.append(" AND LOWER(taad.mother_first_name) = LOWER(:motherName) ");
+        }
+        if (fatherName != null && !fatherName.trim().isEmpty()) {
+            sqlQuery.append(" AND LOWER(taad.father_first_name) = LOWER(:fatherName) ");
+        }
+        if (dateOfBirth != null) {
+            sqlQuery.append(" AND taad.child_date_of_birth = :dateOfBirth ");
+        }
+        if (parishId != null && parishId != 0) {
+            sqlQuery.append(" AND taad.child_parish = :parishId ");
+        }
+        if (genderId != null && genderId != 0) {
+            sqlQuery.append(" AND taad.child_gender = :genderId ");
+        }
+
+        Query query = entityManager.createNativeQuery(sqlQuery.toString());
+
+        // Set query parameters dynamically
+        if (applicationNumber != null && !applicationNumber.trim().isEmpty()) {
+            query.setParameter("applicationNumber", applicationNumber);
+        }
+        if (childName != null && !childName.trim().isEmpty()) {
+            query.setParameter("childName", childName.trim());
+        }
+        if (motherName != null && !motherName.trim().isEmpty()) {
+            query.setParameter("motherName", motherName.trim());
+        }
+        if (fatherName != null && !fatherName.trim().isEmpty()) {
+            query.setParameter("fatherName", fatherName.trim());
+        }
+        if (dateOfBirth != null) {
+            query.setParameter("dateOfBirth", dateOfBirth);
+        }
+        if (parishId != null && parishId != 0) {
+            query.setParameter("parishId", parishId);
+        }
+        if (genderId != null && genderId != 0) {
+            query.setParameter("genderId", genderId);
+        }
+
+        List<Object[]> resultList = query.getResultList();
+
+        // Map results to DTO
+        return resultList.stream().map(result -> {
+            Object[] row = (Object[]) result;
+            SearchApplicationARDto dto = new SearchApplicationARDto();
+            dto.setApplicationRegisterId(row[0] != null ? (Long) row[0] : 0l);
+            dto.setApplicationNumber(row[1] != null ? (String) row[1] : "");
+            dto.setChildName(row[2] != null ? (String) row[2] : "");
+            dto.setMotherName(row[3] != null ? (String) row[3] : "");
+            dto.setFatherName(row[4] != null ? (String) row[4] : "");
+            dto.setDateOfBirth(row[5] != null ? (String) row[5] : "");
+            dto.setParishOfBirth(row[6] != null ? (String) row[6] : "");
+            dto.setGender(row[7] != null ? (String) row[7] : "");
+            return dto;
+        }).collect(Collectors.toList());
+    }
+	
+	public List<TrackAppUserDto> trackApplicationUserList(Integer loggedInUserId) {
+	    StringBuilder sqlQuery = new StringBuilder();
+
+	    sqlQuery.append("SELECT DISTINCT ")
+	        .append("tar.application_no AS applicationNo, ")
+	        .append("concat_ws(', ', taad.child_surname, concat_ws(' ', taad.child_first_name, taad.child_middle_name)) AS childName, ")
+	        .append("concat_ws(', ', taad.mother_surname, concat_ws(' ', taad.mother_first_name, taad.mother_middle_name)) AS motherName, ")
+	        .append("concat_ws(', ', taad.father_surname, concat_ws(' ', taad.father_first_name, taad.father_middle_name)) AS fatherName, ")
+	        .append("TO_CHAR(taad.child_date_of_birth, 'DD/MM/YYYY') AS dateOfBirth, ")
+	        .append("mws.display_stage_name AS status, ")
+	        .append("mat.application_type_name AS applicationType ")
+
+	        .append("FROM applications.t_application_workflow taw ")
+	        .append("INNER JOIN applications.t_application_register tar ")
+	        .append("ON taw.application_register_id = tar.application_register_id ")
+	        .append("INNER JOIN masters.m_application_type mat ")
+	        .append("ON tar.application_type_id = mat.application_type_id ")
+	        .append("INNER JOIN masters.m_workflow_stage mws ")
+	        .append("ON taw.stage_id = mws.stage_id ")
+	        .append("INNER JOIN adoption.t_application_adoption_details taad ")
+	        .append("ON tar.application_register_id = taad.application_register_id ")
+
+	        .append("WHERE (taw.assigned_from_user = :loggedInUserId OR taw.assigned_to_user = :loggedInUserId) ")
+	        .append("AND taw.is_active = true ")
+	        .append("AND tar.is_active = true ")
+	        .append("AND mws.is_active = true ")
+	        .append("AND mat.module_code = 'ADOPTION' ")
+	        .append("AND mat.application_type_code = 'AR' ")
+	        .append("AND taw.stage_id <> 1; ");
+
+	    Query query = entityManager.createNativeQuery(sqlQuery.toString());
+
+	    query.setParameter("loggedInUserId", loggedInUserId);
+
+	    List<Object[]> resultList = query.getResultList();
+
+	    List<TrackAppUserDto> trackApplicationUserList = resultList.stream().map(result -> {
+	        Object[] row = (Object[]) result;
+	        TrackAppUserDto dto = new TrackAppUserDto();
+	        dto.setApplicationNo(row[0] != null ? (String) row[0] : "");
+	        dto.setChildName(row[1] != null ? (String) row[1] : "");
+	        dto.setMotherName(row[2] != null ? (String) row[2] : "");
+	        dto.setFatherName(row[3] != null ? (String) row[3] : "");
+	        dto.setDateOfBirth(row[4] != null ? (String) row[4] : "");
+	        dto.setStatus(row[5] != null ? (String) row[5] : "");
+	        dto.setApplicationType(row[6] != null ? (String) row[6] : "");
+	        return dto;
+	    }).collect(Collectors.toList());
+
+	    return trackApplicationUserList;
 	}
 
 
