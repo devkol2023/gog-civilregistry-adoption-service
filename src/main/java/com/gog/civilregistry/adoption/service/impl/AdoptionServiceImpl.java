@@ -54,10 +54,13 @@ import com.gog.civilregistry.adoption.repository.AdoptionApplicationDocumentRepo
 import com.gog.civilregistry.adoption.repository.ApplicationAdoptionDetailRepository;
 import com.gog.civilregistry.adoption.repository.ApplicationRegisterRepository;
 import com.gog.civilregistry.adoption.repository.custom.AdoptionRepositoryCustom;
+import com.gog.civilregistry.adoption.repository.custom.ApplicationRepositoryCustom;
 import com.gog.civilregistry.adoption.service.AdoptionService;
 import com.gog.civilregistry.adoption.service.DMSService;
 import com.gog.civilregistry.adoption.service.IntegrationApiService;
 import com.gog.civilregistry.adoption.util.CommonConstants;
+import com.gog.civilregistry.adoption.model.VaultRequest;
+import com.gog.civilregistry.adoption.model.VaultResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -90,6 +93,9 @@ public class AdoptionServiceImpl implements AdoptionService {
 
 	@Autowired
 	ApplicationAdoptionDetailRepository applicationAdoptionDetailRepository;
+	
+	@Autowired
+	ApplicationRepositoryCustom applicationRepositoryCustom;
 
 	@Override
 	public ServiceResponse trackApplicationStatus(ApplicationTrackStatus request) {
@@ -1034,6 +1040,26 @@ public class AdoptionServiceImpl implements AdoptionService {
 		logger.info("Exit Method " + " trackAppUser");
 		return response;
 
+	}
+	
+	@Override
+	public ServiceResponse getVault(VaultRequest request) {
+		logger.info("Entry Method " + " getVault");
+		ServiceResponse response = new ServiceResponse();
+		try {
+			List<VaultResponse> results = applicationRepositoryCustom.executeVault(request.getApplicationTypeCode(),
+					request.getState(), request.getUserId(), request.getInstituteId(), request.getRoleId(),
+					request.getPageNumber(), request.getPerPageCount(), request.getSearchText());
+			response.setStatus(CommonConstants.SUCCESS_STATUS);
+			response.setMessage(CommonConstants.SUCCESS_MSG);
+			response.setResponseObject(results);
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.setStatus(CommonConstants.ERROR_STATUS);
+			response.setMessage("An error occurred while processing the request.");
+		}
+		logger.info("Exit Method " + " getVault");
+		return response;
 	}
 
 }

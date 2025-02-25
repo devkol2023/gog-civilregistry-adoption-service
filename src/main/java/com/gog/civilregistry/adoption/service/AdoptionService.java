@@ -9,6 +9,7 @@ import com.gog.civilregistry.adoption.model.DocListRequest;
 import com.gog.civilregistry.adoption.model.GeneralInformation;
 import com.gog.civilregistry.adoption.model.SearchApplicationARRequest;
 import com.gog.civilregistry.adoption.model.TrackAppUserRequest;
+import com.gog.civilregistry.adoption.model.VaultRequest;
 import com.gog.civilregistry.adoption.model.common.ServiceResponse;
 
 public interface AdoptionService {
@@ -26,5 +27,7 @@ public interface AdoptionService {
 	ServiceResponse searchApplicationAR(SearchApplicationARRequest request);
 	
 	ServiceResponse trackAppUser(TrackAppUserRequest request);
+	
+	ServiceResponse getVault(VaultRequest request);
 
 }
