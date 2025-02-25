@@ -16,6 +16,7 @@ public class MotherInformation {
 	private String motherQualification;
 	private String motherOccupation;
 	private String motherReligion;
+	private String motherDOB;
 
 	private Integer motherCitizenId; // conflictiong DB type
 	private String motherCivilRegistryNumber;

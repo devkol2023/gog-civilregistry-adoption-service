@@ -21,5 +21,6 @@ public class FatherInformation {
 	private String fatherEmailId;
 	private String fatherMaritalStatus;
 	private Integer fatherVillageTown;
+	private String fatherDOB;
 
 }

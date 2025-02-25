@@ -43,6 +43,14 @@ public class ApplicationAdoptionDetailEntity extends BaseEntity {
 	@Temporal(TemporalType.DATE)
 	private Date childDateOfBirth;
 
+	@Column(name = "father_date_of_birth")
+	@Temporal(TemporalType.DATE)
+	private Date fatherDateOfBirth;
+
+	@Column(name = "mother_date_of_birth")
+	@Temporal(TemporalType.DATE)
+	private Date motherDateOfBirth;
+
 	@Column(name = "child_first_name")
 	private String childFirstName;
 
