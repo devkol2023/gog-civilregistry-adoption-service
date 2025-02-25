@@ -15,6 +15,8 @@ import com.gog.civilregistry.adoption.model.GeneralInformation;
 import com.gog.civilregistry.adoption.model.GetWfNextStageRequest;
 import com.gog.civilregistry.adoption.model.GetWfNextUserRequest;
 import com.gog.civilregistry.adoption.model.ReleaseApplicationWfRequest;
+import com.gog.civilregistry.adoption.model.SearchApplicationARRequest;
+import com.gog.civilregistry.adoption.model.TrackAppUserRequest;
 import com.gog.civilregistry.adoption.model.common.ServiceResponse;
 import com.gog.civilregistry.adoption.service.AdoptionService;
 import com.gog.civilregistry.adoption.service.WorkflowService;
@@ -113,4 +115,15 @@ public class AdoptionController {
 		}
 		return response;
 	}
+	
+	@PostMapping("/searchApplicationAR")
+	public ServiceResponse searchApplicationAR(@RequestBody SearchApplicationARRequest request) {
+		return adoptionService.searchApplicationAR(request);
+	}
+	
+	@PostMapping("/trackAppUser")
+	public ServiceResponse trackAppUser(@RequestBody TrackAppUserRequest request) {
+		return adoptionService.trackAppUser(request);
+	}
+	
 }

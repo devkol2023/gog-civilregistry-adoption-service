@@ -38,8 +38,14 @@ import com.gog.civilregistry.adoption.model.NewFileUploadResponse;
 import com.gog.civilregistry.adoption.model.ProcessApplicationModel;
 import com.gog.civilregistry.adoption.model.SaveARDraftRequest;
 import com.gog.civilregistry.adoption.model.SaveARDraftResponse;
+import com.gog.civilregistry.adoption.model.SearchApplicationARDto;
+import com.gog.civilregistry.adoption.model.SearchApplicationARRequest;
+import com.gog.civilregistry.adoption.model.SearchApplicationARResponse;
 import com.gog.civilregistry.adoption.model.TownCodeProjection;
 import com.gog.civilregistry.adoption.model.TownProjection;
+import com.gog.civilregistry.adoption.model.TrackAppUserDto;
+import com.gog.civilregistry.adoption.model.TrackAppUserRequest;
+import com.gog.civilregistry.adoption.model.TrackAppUserResponse;
 import com.gog.civilregistry.adoption.model.UploadFileData;
 import com.gog.civilregistry.adoption.model.WorkflowInformation;
 import com.gog.civilregistry.adoption.model.WorkflowUpdateModel;
@@ -946,6 +952,86 @@ public class AdoptionServiceImpl implements AdoptionService {
 			response.setMessage("An error occurred while processing the request.");
 		}
 		logger.info("Exit Method " + " getDocList");
+		return response;
+
+	}
+	
+	@Override
+	public ServiceResponse searchApplicationAR(SearchApplicationARRequest request) {
+		logger.info("Entry Method: searchApplicationAR");
+		ServiceResponse response = new ServiceResponse();
+
+		try {
+			Long applicationRegisterId = null;
+			String applicationNumber = request.getApplicationNumber();
+			String dateOfBirthStr = request.getDateOfBirthStr();
+
+			Date dateOfBirth = null;
+			SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+			if (dateOfBirthStr != null && !dateOfBirthStr.equals("")) {
+				try {
+					dateOfBirth = dateFormat.parse(dateOfBirthStr);
+				} catch (Exception e) {
+					System.out.println("Error parsing the date: " + e.getMessage());
+				}
+			}
+
+			String childName = request.getChildName();
+			String motherName = request.getMotherName();
+			String fatherName = request.getFatherName();
+			Integer parishId = request.getParishId();
+			Integer genderId = request.getGenderId();
+
+			if (applicationNumber != null && !applicationNumber.equals("")) {
+				applicationRegisterId = applicationAdoptionDetailRepository.getIdFromApplicationNo(applicationNumber);
+				if (applicationRegisterId == null || applicationRegisterId == 0l) {
+					response.setStatus(CommonConstants.SUCCESS_STATUS);
+					response.setMessage(CommonConstants.SUCCESS);
+					return response;
+				}
+			}
+
+			List<SearchApplicationARDto> searchApplicationARList = adoptionRepositoryCustom.searchApplicationAR(childName,
+					motherName, fatherName, dateOfBirth, applicationNumber, parishId, genderId);
+
+			SearchApplicationARResponse searchApplicationARResponse = new SearchApplicationARResponse();
+			searchApplicationARResponse.setSearchApplicationARResponse(searchApplicationARList);
+
+			response.setStatus(CommonConstants.SUCCESS_STATUS);
+			response.setMessage(CommonConstants.SUCCESS);
+			response.setResponseObject(searchApplicationARResponse);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.setStatus(CommonConstants.ERROR_STATUS);
+			response.setMessage("An error occurred while processing the request.");
+		}
+
+		return response;
+	}
+	
+	@Override
+	public ServiceResponse trackAppUser(TrackAppUserRequest request) {
+		logger.info("Entry Method: trackAppUser");
+		ServiceResponse response = new ServiceResponse();
+
+		try {
+			Integer loggedInUserId = request.getLoggedInUserId();
+			List<TrackAppUserDto> trackAppUserList = adoptionRepositoryCustom.trackApplicationUserList(loggedInUserId);
+
+			TrackAppUserResponse trackAppUserResponse = new TrackAppUserResponse();
+			trackAppUserResponse.setTrackAppUserResponse(trackAppUserList);
+
+			response.setStatus(CommonConstants.SUCCESS_STATUS);
+			response.setMessage(CommonConstants.SUCCESS);
+			response.setResponseObject(trackAppUserResponse);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.setStatus(CommonConstants.ERROR_STATUS);
+			response.setMessage("An error occurred while processing the request.");
+		}
+		logger.info("Exit Method " + " trackAppUser");
 		return response;
 
 	}
