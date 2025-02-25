@@ -31,6 +31,10 @@ import com.gog.civilregistry.adoption.service.DMSService;
 import com.gog.civilregistry.adoption.service.IntegrationApiService;
 import com.gog.civilregistry.adoption.service.AdoptionService;
 import com.gog.civilregistry.adoption.util.CommonConstants;
+import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
+import com.gog.civilregistry.adoption.model.ApplicationTrackStatusResponse;
+import com.gog.civilregistry.adoption.model.common.ServiceResponse;
+import com.gog.civilregistry.adoption.repository.ApplicationAdoptionDetailRepository;
 import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Chunk;
 import com.itextpdf.text.Document;
@@ -78,6 +82,63 @@ public class AdoptionServiceImpl implements AdoptionService {
 	
 	@Autowired
 	IntegrationApiService integrationApiService;
+	
+	@Autowired
+	ApplicationAdoptionDetailRepository applicationAdoptionDetailRepository;
+	
+	@Override
+	public ServiceResponse trackApplicationStatus(ApplicationTrackStatus request) {
+		logger.info("Entry Method: trackApplicationStatus");
+		ServiceResponse response = new ServiceResponse();
+		ModelMapper modelMapper = new ModelMapper();
+
+		try {
+			Long applicationId = request.getApplicationId();
+			if (applicationId == null) {
+				logger.error("Application ID is null.");
+				response.setStatus(CommonConstants.ERROR_STATUS);
+				response.setMessage("Application ID cannot be null.");
+				return response;
+			}
+
+			List<Object[]> trackApplicationStatusList = applicationAdoptionDetailRepository
+					.trackApplicationStatus(applicationId);
+
+			if (trackApplicationStatusList == null || trackApplicationStatusList.isEmpty()) {
+				logger.warn("No data found for application ID: " + applicationId);
+				response.setStatus(CommonConstants.ERROR_STATUS);
+				response.setMessage("No application status found for the given ID.");
+				return response;
+			}
+
+			List<ApplicationTrackStatusResponse> responseList = trackApplicationStatusList.stream().map(row -> {
+				ApplicationTrackStatusResponse trackStatusResponse = new ApplicationTrackStatusResponse();
+
+				trackStatusResponse.setWorkflowId((Long) row[0]);
+				trackStatusResponse.setApplicationId((Long) row[1]);
+				trackStatusResponse.setSubmittedBy((String) row[2]);
+				trackStatusResponse.setSubmittedTo((String) row[3]);
+				trackStatusResponse.setDateOfSubmission((String) row[4]);
+				trackStatusResponse.setClaimedBy((String) row[5]);
+				trackStatusResponse.setClaimedDate((String) row[6]);
+				trackStatusResponse.setReleasedDate((String) row[7]);
+				trackStatusResponse.setActionStage((String) row[8]);
+
+				return trackStatusResponse;
+			}).collect(Collectors.toList());
+
+			response.setStatus(CommonConstants.SUCCESS_STATUS);
+			response.setMessage(CommonConstants.SUCCESS);
+			response.setResponseObject(responseList);
+
+		} catch (Exception e) {
+			logger.error("An error occurred in trackApplicationStatus: ", e);
+			response.setStatus(CommonConstants.ERROR_STATUS);
+			response.setMessage("An error occurred while processing the request.");
+		}
+
+		return response;
+	}
 
 	
 	
