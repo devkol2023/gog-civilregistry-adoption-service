@@ -13,4 +13,6 @@ public class SaveARDraftResponse {
 	private GeneralInformation generalInformation;
 	private Integer loginUserId;
 	private List<UploadFileData> uploadFileData;
+	private WorkflowInformation workflowInformation;
+	private Integer isDraft;
 }

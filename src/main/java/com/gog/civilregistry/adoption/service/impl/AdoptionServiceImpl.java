@@ -1062,4 +1062,127 @@ public class AdoptionServiceImpl implements AdoptionService {
 		return response;
 	}
 
+	@Override
+	public ServiceResponse saveAndSubmitByDepartmentUsers(MultipartFile[] files, String requestStr) {
+		
+		logger.info("Entry Method " + " saveAndSubmitByDepartmentUsers");
+		ServiceResponse response = new ServiceResponse();
+		List<Integer> list = new ArrayList<Integer>();
+		ObjectMapper mapper = new ObjectMapper();
+		String dmsReferenceId = null;
+		List<UploadFileData> docEntityResponseList = new ArrayList<UploadFileData>();
+		Integer yearOfDeath = null;
+		
+		try {
+			
+			SaveARDraftRequest request = null;
+			requestStr = requestStr.replaceAll("\\n", "").replaceAll("\\t", "");
+			request = mapper.readValue(requestStr, SaveARDraftRequest.class);
+			
+			if (files != null) {
+				if (files.length > 0) {
+					// only upload those files whole id = 0 or null
+					int length = files.length;
+					for (int j = 0; j < length; j++) {
+						if (request.getUploadFileData().get(j).getApplicationDocId() == 0L
+								|| request.getUploadFileData().get(j).getApplicationDocId() == null) {
+							MultipartFile[] fileToUpload = new MultipartFile[1];
+							fileToUpload[0] = files[j];
+							NewFileUploadResponse fileUploadResponse = dmsService.uploadFileToAlfresco(fileToUpload);
+							if (request.getUploadFileData() != null && fileUploadResponse != null
+									&& !fileUploadResponse.getFileUploadResponse().isEmpty()) {
+								int i = 0;
+
+								request.getUploadFileData().get(j)
+										.setReferenceId(fileUploadResponse.getFileUploadResponse().get(0));
+								request.getUploadFileData().get(j)
+										.setApplicationDocDmsId(fileUploadResponse.getFileUploadResponse().get(0));
+								request.getUploadFileData().get(j).setFileName(files[j].getOriginalFilename());
+							}
+						}
+					}
+				}
+			}
+
+			for (UploadFileData documentAttachment : request.getUploadFileData()) {
+				// save only if file id is null or 0
+				AdoptionApplicationDocumentEntity docEntity = new AdoptionApplicationDocumentEntity();
+				docEntity.setApplicationDocDmsId(documentAttachment.getReferenceId());
+				docEntity.setApplicationDocName(documentAttachment.getFileName());
+				docEntity.setApplicationRegisterId(request.getGeneralInformation().getApplicationRegisterId());
+				docEntity.setDocumentTypeId(documentAttachment.getDocTypeId());
+				docEntity.setDocumentTypeCode(documentAttachment.getDocTypeCode());
+				docEntity.setApplicationDocSubject(documentAttachment.getFileSubject());
+				docEntity.setCreatedBy(request.getLoginUserId());
+				docEntity.setUpdatedBy(request.getLoginUserId());
+				docEntity.setUpdatedOn(LocalDateTime.now());
+				docEntity.setCreatedOn(LocalDateTime.now());
+				docEntity.setIsActive(true);
+				// save or update based on applicationDocId
+				if (documentAttachment.getApplicationDocId() != 0L
+						|| documentAttachment.getApplicationDocId() != null) {
+					docEntity.setApplicationDocId(documentAttachment.getApplicationDocId());
+
+				}
+				docEntity = documentRepository.save(docEntity);
+				// setting details in uploadFileData
+				documentAttachment.setApplicationRegisterId(request.getGeneralInformation().getApplicationRegisterId());
+				documentAttachment.setApplicationDocDmsId(documentAttachment.getReferenceId());
+				documentAttachment.setApplicationDocId(docEntity.getApplicationDocId());
+				docEntityResponseList.add(documentAttachment);
+			}
+			
+			
+			WorkflowInformation workflowInformation = request.getWorkflowInformation();
+
+			if (request.getGeneralInformation().getApplicationTypeCode() != null
+					&& request.getGeneralInformation().getApplicationTypeCode().equalsIgnoreCase(CommonConstants.ADOPTION_REGISTRATION)) {
+
+				
+                String entryNo = request.getGeneralInformation().getEntryNo();
+				
+
+                ApplicationAdoptionDetailEntity applicationEntity = applicationAdoptionDetailRepository
+						.findByApplicationRegisterId(request.getGeneralInformation().getApplicationRegisterId());
+
+								
+				if (applicationEntity != null) {
+					applicationEntity.setEntryNo(entryNo);
+					ApplicationAdoptionDetailEntity savedApplicationEntity = applicationAdoptionDetailRepository.save(applicationEntity);
+				}
+			} 
+			
+			WorkflowUpdateModel workflowUpdateModel = new WorkflowUpdateModel();
+			modelMapper.map(workflowInformation, workflowUpdateModel);
+			
+			workflowUpdateModel.setApplicationRegisterId(request.getGeneralInformation().getApplicationRegisterId());
+			workflowUpdateModel.setApplicationTypeId(request.getGeneralInformation().getApplicationTypeId());
+			workflowUpdateModel.setIsDraft(request.getIsDraft());
+
+			Map<String, Object> resultMap = adoptionRepositoryCustom.updateWorkflowDetails(workflowUpdateModel);
+			
+			SaveARDraftResponse responseObj = new SaveARDraftResponse();
+
+			
+			responseObj.setGeneralInformation(request.getGeneralInformation());
+			responseObj.setWorkflowInformation(request.getWorkflowInformation());
+			responseObj.setUploadFileData(docEntityResponseList);
+
+			responseObj.setLoginUserId(request.getLoginUserId());
+			responseObj.setIsDraft(request.getIsDraft());
+			
+			response.setStatus(CommonConstants.SUCCESS_STATUS);
+			response.setMessage(CommonConstants.SUCCESS_MSG);
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.setStatus(CommonConstants.ERROR_STATUS);
+			response.setMessage(CommonConstants.ERROR);
+			throw new RuntimeException("Error while submitting the form", e);
+		}
+		logger.info("Exit Method " + " saveAndSubmitByDepartmentUsers");
+		return response;
+	}
+
 }

@@ -132,4 +132,17 @@ public class AdoptionController {
 		return adoptionService.getVault(request);
 	}
 	
+	@PostMapping("/saveAndSubmitByDepartmentUsers")
+	public ServiceResponse saveAndSubmitByDepartmentUsers(
+			@RequestParam(value = "attachments", required = false) MultipartFile[] attachments, String request) {
+		ServiceResponse response = new ServiceResponse();
+		try {
+			response = adoptionService.saveAndSubmitByDepartmentUsers(attachments, request);
+		} catch (Exception e) {
+			response.setStatus(CommonConstants.ERROR_STATUS);
+			response.setMessage(CommonConstants.ERROR_MSG);
+		}
+		return response;
+	}
+	
 }

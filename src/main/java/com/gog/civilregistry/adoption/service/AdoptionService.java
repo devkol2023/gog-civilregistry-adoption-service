@@ -30,4 +30,6 @@ public interface AdoptionService {
 	
 	ServiceResponse getVault(VaultRequest request);
 
+	ServiceResponse saveAndSubmitByDepartmentUsers(MultipartFile[] attachments, String request);
+
 }
