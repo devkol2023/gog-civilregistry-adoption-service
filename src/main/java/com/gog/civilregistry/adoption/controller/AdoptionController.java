@@ -25,10 +25,10 @@ public class AdoptionController {
 	@Autowired
 	private WorkflowService workflowService;
 
-	private final AdoptionService marriageService;
+	private final AdoptionService adoptionService;
 
-	public AdoptionController(AdoptionService marriageService) {
-		this.marriageService = marriageService;
+	public AdoptionController(AdoptionService adoptionService) {
+		this.adoptionService = adoptionService;
 	}
 
 	@PostMapping("/claimApplicationWorkflow")
@@ -69,5 +69,17 @@ public class AdoptionController {
 		return workflowService.getWfNextUser(request);
 	}
 
-	
+	@PostMapping("/saveARDraft")
+	public ServiceResponse saveARDraft(
+			@RequestParam(value = "attachments", required = false) MultipartFile[] attachments, String request) {
+		// SaveNODDraftRequest
+		ServiceResponse response = new ServiceResponse();
+		try {
+			response = adoptionService.saveARDraft(attachments, request);
+		} catch (Exception e) {
+			response.setStatus(CommonConstants.ERROR_STATUS);
+			response.setMessage(CommonConstants.ERROR_MSG);
+		}
+		return response;
+	}
 }
