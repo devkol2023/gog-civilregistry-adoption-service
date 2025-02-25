@@ -75,12 +75,12 @@ public class AdoptionController {
 		return adoptionService.trackApplicationStatus(request);
 	}
 
-	@PostMapping("/getAR")
+	@PostMapping("/getAdoptionRegistrationDetails")
 	public ServiceResponse getAR(@RequestBody GeneralInformation request) {
 		return adoptionService.getAR(request);
 	}
 
-	@PostMapping("/saveARDraft")
+	@PostMapping("/saveAdoptionRegistrationDraft")
 	public ServiceResponse saveARDraft(
 			@RequestParam(value = "attachments", required = false) MultipartFile[] attachments, String request) {
 		// SaveNODDraftRequest
