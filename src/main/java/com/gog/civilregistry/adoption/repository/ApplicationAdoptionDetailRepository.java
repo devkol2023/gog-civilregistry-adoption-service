@@ -37,6 +37,7 @@ public interface ApplicationAdoptionDetailRepository extends JpaRepository<Appli
 			+ "FROM citizen.t_manage_citizen tmc " + "WHERE tmc.citizen_id IN (:citizenIds)", nativeQuery = true)
 	List<GetCivilRegistryNumberDTO> getCivilRegNoFromCitizenId(@Param("citizenIds") List<Integer> citizenIds);
 
+
 	@Modifying
 	@Transactional
 	@Query(value = "INSERT INTO masters.m_geography\r\n"
@@ -52,5 +53,14 @@ public interface ApplicationAdoptionDetailRepository extends JpaRepository<Appli
 			+ "where mg.geography_level_name like '%CITY%' \r\n"
 			+ "and mg.geography_parent_id = :parentId", nativeQuery = true)
 	TownCodeProjection getCountForTownCode(@Param("parentId") Integer parentId);
-
+   
+   @Query(value = "select application_workflow_id,application_register_id,submitted_by, "
+			+ "submitted_to, date_of_submission, claimed_by, claimed_date, released_date, stage  "
+			+ " from applications.view_application_tracker"
+			+ " where application_register_id = :applicationId"
+			+ " order by application_register_id,application_workflow_id",
+	        nativeQuery = true)
+	List<Object[]> trackApplicationStatus(Long applicationId);
+   
+   
 }

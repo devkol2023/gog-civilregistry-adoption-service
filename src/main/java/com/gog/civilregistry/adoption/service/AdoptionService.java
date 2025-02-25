@@ -10,6 +10,8 @@ import com.gog.civilregistry.adoption.model.GeneralInformation;
 import com.gog.civilregistry.adoption.model.common.ServiceResponse;
 
 public interface AdoptionService {
+	
+	ServiceResponse trackApplicationStatus(ApplicationTrackStatus request);
 
 	ServiceResponse saveARDraft(MultipartFile[] attachments, String request);
 

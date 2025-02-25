@@ -17,6 +17,7 @@ import com.gog.civilregistry.adoption.model.common.ServiceResponse;
 import com.gog.civilregistry.adoption.service.AdoptionService;
 import com.gog.civilregistry.adoption.service.WorkflowService;
 import com.gog.civilregistry.adoption.util.CommonConstants;
+import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
 
 @RestController
 @RequestMapping("/api")
@@ -67,6 +68,11 @@ public class AdoptionController {
 	@PostMapping("/getWfNextUser")
 	public ServiceResponse getWfNextUser(@RequestBody GetWfNextUserRequest request) {
 		return workflowService.getWfNextUser(request);
+	}
+	
+	@PostMapping("/trackApplicationStatus")
+	public ServiceResponse trackApplicationStatus(@RequestBody ApplicationTrackStatus request) {
+		return adoptionService.trackApplicationStatus(request);
 	}
 
 	@PostMapping("/getAR")
