@@ -223,7 +223,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 				ProcessApplicationModel processAr = new ProcessApplicationModel();
 				processAr.setFlag("D");
 				processAr.setApplicationTypeId(request.getGeneralInformation().getApplicationTypeId());
-				processAr.setStatusId(request.getGeneralInformation().getStatus());
+				processAr.setStatusId(request.getGeneralInformation().getCurrentStatus());
 				processAr.setApplicationRegisterId(applicationRegisterId);
 				processAr.setUserId(request.getLoginUserId());
 
@@ -359,18 +359,23 @@ public class AdoptionServiceImpl implements AdoptionService {
 					|| request.getGeneralInformation().getApplicationAdoptionId() == 0L) {
 
 				Date deliveryDate = null;
+//				SimpleDateFormat inputFormat = new SimpleDateFormat("dd/MM/yyyy");
+//				SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd");
+//				Date date = inputFormat.parse(request.getGeneralInformation().getCod());
+//				String formattedCODate = outputFormat.format(date);
+//				request.getGeneralInformation().setCourtOrderDate(formattedCODate);
 
 				applicationEntity = modelMapper.map(request.getFatherInformation(),
 						ApplicationAdoptionDetailEntity.class);
 				modelMapper.map(request.getMotherInformation(), applicationEntity);
 				modelMapper.map(request.getGeneralInformation(), applicationEntity);
-				if (request.getChildInformation().getChildDateOfBirth() != null)
+				if (request.getChildInformation().getDob() != null)
 					applicationEntity
-							.setChildDateOfBirth(formatter.parse(request.getChildInformation().getChildDateOfBirth()));
+							.setChildDateOfBirth(formatter.parse(request.getChildInformation().getDob()));
 
-				if (request.getGeneralInformation().getCourtOrderDate() != null)
+				if (request.getGeneralInformation().getCod() != null)
 					applicationEntity
-							.setCourtOrderDate(formatter.parse(request.getGeneralInformation().getCourtOrderDate()));
+							.setCourtOrderDate(formatter.parse(request.getGeneralInformation().getCod()));
 
 				modelMapper.map(request.getChildInformation(), applicationEntity);
 
@@ -407,13 +412,13 @@ public class AdoptionServiceImpl implements AdoptionService {
 
 				modelMapper.map(request.getMotherInformation(), applicationEntity);
 				modelMapper.map(request.getGeneralInformation(), applicationEntity);
-				if (request.getChildInformation().getChildDateOfBirth() != null)
+				if (request.getChildInformation().getDob() != null)
 					applicationEntity
-							.setChildDateOfBirth(formatter.parse(request.getChildInformation().getChildDateOfBirth()));
+							.setChildDateOfBirth(formatter.parse(request.getChildInformation().getDob()));
 
-				if (request.getGeneralInformation().getCourtOrderDate() != null)
+				if (request.getGeneralInformation().getCod() != null)
 					applicationEntity
-							.setCourtOrderDate(formatter.parse(request.getGeneralInformation().getCourtOrderDate()));
+							.setCourtOrderDate(formatter.parse(request.getGeneralInformation().getCod()));
 				modelMapper.map(request.getChildInformation(), applicationEntity);
 
 				applicationEntity.setUpdatedBy(request.getLoginUserId());
@@ -550,9 +555,9 @@ public class AdoptionServiceImpl implements AdoptionService {
 //			generalInformation.setInstituteName(proj.getInstituteName());
 
 			if (applicationAR.getCourtOrderDate() != null)
-				generalInformation.setCourtOrderDate(formatter.format(applicationAR.getCourtOrderDate()));
+				generalInformation.setCod(formatter.format(applicationAR.getCourtOrderDate()));
 			if (applicationAR.getChildDateOfBirth() != null)
-				childInformation.setChildDateOfBirth(formatter.format(applicationAR.getChildDateOfBirth()));
+				childInformation.setDob(formatter.format(applicationAR.getChildDateOfBirth()));
 
 			generalInformation.setCurrentStageId(applicationRegisterEntity.getCurrentStatusId());
 
@@ -755,13 +760,13 @@ public class AdoptionServiceImpl implements AdoptionService {
 						ApplicationAdoptionDetailEntity.class);
 				modelMapper.map(request.getMotherInformation(), applicationEntity);
 				modelMapper.map(request.getGeneralInformation(), applicationEntity);
-				if (request.getChildInformation().getChildDateOfBirth() != null)
+				if (request.getChildInformation().getDob() != null)
 					applicationEntity
-							.setChildDateOfBirth(formatter.parse(request.getChildInformation().getChildDateOfBirth()));
+							.setChildDateOfBirth(formatter.parse(request.getChildInformation().getDob()));
 
-				if (request.getGeneralInformation().getCourtOrderDate() != null)
+				if (request.getGeneralInformation().getCod() != null)
 					applicationEntity
-							.setCourtOrderDate(formatter.parse(request.getGeneralInformation().getCourtOrderDate()));
+							.setCourtOrderDate(formatter.parse(request.getGeneralInformation().getCod()));
 
 				modelMapper.map(request.getChildInformation(), applicationEntity);
 
@@ -797,13 +802,13 @@ public class AdoptionServiceImpl implements AdoptionService {
 
 				modelMapper.map(request.getMotherInformation(), applicationEntity);
 				modelMapper.map(request.getGeneralInformation(), applicationEntity);
-				if (request.getChildInformation().getChildDateOfBirth() != null)
+				if (request.getChildInformation().getDob() != null)
 					applicationEntity
-							.setChildDateOfBirth(formatter.parse(request.getChildInformation().getChildDateOfBirth()));
+							.setChildDateOfBirth(formatter.parse(request.getChildInformation().getDob()));
 
-				if (request.getGeneralInformation().getCourtOrderDate() != null)
+				if (request.getGeneralInformation().getCod() != null)
 					applicationEntity
-							.setCourtOrderDate(formatter.parse(request.getGeneralInformation().getCourtOrderDate()));
+							.setCourtOrderDate(formatter.parse(request.getGeneralInformation().getCod()));
 				modelMapper.map(request.getChildInformation(), applicationEntity);
 
 				applicationEntity.setUpdatedBy(request.getLoginUserId());
