@@ -287,11 +287,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 			if (motherTown != null)
 				request.getMotherInformation().setMotherVillageTown(motherTown.getId());
 
-			// End: Commented by Sayan
-
 			// normal application save process for parent and child
-
-			// Start: Added by Sayan
 
 			if (request.getGeneralInformation().getApplicationAdoptionId() == null
 					|| request.getGeneralInformation().getApplicationAdoptionId() == 0L) {
@@ -302,6 +298,14 @@ public class AdoptionServiceImpl implements AdoptionService {
 						ApplicationAdoptionDetailEntity.class);
 				modelMapper.map(request.getMotherInformation(), applicationEntity);
 				modelMapper.map(request.getGeneralInformation(), applicationEntity);
+				if (request.getChildInformation().getChildDateOfBirth() != null)
+					applicationEntity
+							.setChildDateOfBirth(formatter.parse(request.getChildInformation().getChildDateOfBirth()));
+
+				if (request.getGeneralInformation().getCourtOrderDate() != null)
+					applicationEntity
+							.setCourtOrderDate(formatter.parse(request.getGeneralInformation().getCourtOrderDate()));
+
 				modelMapper.map(request.getChildInformation(), applicationEntity);
 
 				applicationEntity.setCreatedBy(request.getLoginUserId());
@@ -337,6 +341,13 @@ public class AdoptionServiceImpl implements AdoptionService {
 
 				modelMapper.map(request.getMotherInformation(), applicationEntity);
 				modelMapper.map(request.getGeneralInformation(), applicationEntity);
+				if (request.getChildInformation().getChildDateOfBirth() != null)
+					applicationEntity
+							.setChildDateOfBirth(formatter.parse(request.getChildInformation().getChildDateOfBirth()));
+
+				if (request.getGeneralInformation().getCourtOrderDate() != null)
+					applicationEntity
+							.setCourtOrderDate(formatter.parse(request.getGeneralInformation().getCourtOrderDate()));
 				modelMapper.map(request.getChildInformation(), applicationEntity);
 
 				applicationEntity.setUpdatedBy(request.getLoginUserId());

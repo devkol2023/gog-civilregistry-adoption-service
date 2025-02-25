@@ -1,6 +1,7 @@
 package com.gog.civilregistry.adoption.entity;
 
 import java.sql.Timestamp;
+import java.util.Date;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,6 +10,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 import lombok.Data;
 
 /**
@@ -37,7 +40,8 @@ public class ApplicationAdoptionDetailEntity extends BaseEntity {
 	private Integer childCitizenId;
 
 	@Column(name = "child_date_of_birth")
-	private Timestamp childDateOfBirth;
+	@Temporal(TemporalType.DATE)
+	private Date childDateOfBirth;
 
 	@Column(name = "child_first_name")
 	private String childFirstName;
@@ -55,7 +59,8 @@ public class ApplicationAdoptionDetailEntity extends BaseEntity {
 	private String childSurname;
 
 	@Column(name = "court_order_date")
-	private Timestamp courtOrderDate;
+	@Temporal(TemporalType.DATE)
+	private Date courtOrderDate;
 
 	@Column(name = "entry_no")
 	private Integer entryNo;
