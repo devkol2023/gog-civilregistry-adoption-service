@@ -55,7 +55,7 @@ public class ApplicationAdoptionDetailEntity extends BaseEntity {
 	private String childFirstName;
 
 	@Column(name = "child_gender")
-	private String childGender;
+	private Integer childGender;
 
 	@Column(name = "child_middle_name")
 	private String childMiddleName;
