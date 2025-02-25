@@ -17,6 +17,7 @@ import com.gog.civilregistry.adoption.model.common.ServiceResponse;
 import com.gog.civilregistry.adoption.service.AdoptionService;
 import com.gog.civilregistry.adoption.service.WorkflowService;
 import com.gog.civilregistry.adoption.util.CommonConstants;
+import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
 
 @RestController
 @RequestMapping("/api")
@@ -25,10 +26,10 @@ public class AdoptionController {
 	@Autowired
 	private WorkflowService workflowService;
 
-	private final AdoptionService marriageService;
+	private final AdoptionService adoptionService;
 
-	public AdoptionController(AdoptionService marriageService) {
-		this.marriageService = marriageService;
+	public AdoptionController(AdoptionService adoptionService) {
+		this.adoptionService = adoptionService;
 	}
 
 	@PostMapping("/claimApplicationWorkflow")
@@ -67,6 +68,11 @@ public class AdoptionController {
 	@PostMapping("/getWfNextUser")
 	public ServiceResponse getWfNextUser(@RequestBody GetWfNextUserRequest request) {
 		return workflowService.getWfNextUser(request);
+	}
+	
+	@PostMapping("/trackApplicationStatus")
+	public ServiceResponse trackApplicationStatus(@RequestBody ApplicationTrackStatus request) {
+		return adoptionService.trackApplicationStatus(request);
 	}
 
 	

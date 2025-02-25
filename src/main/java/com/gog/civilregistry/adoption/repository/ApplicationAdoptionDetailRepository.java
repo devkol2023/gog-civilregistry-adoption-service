@@ -40,5 +40,14 @@ public interface ApplicationAdoptionDetailRepository
 	List<GetCivilRegistryNumberDTO> getCivilRegNoFromCitizenId(@Param("citizenIds") List<Integer> citizenIds);
    
    
+   @Query(value = "select application_workflow_id,application_register_id,submitted_by, "
+			+ "submitted_to, date_of_submission, claimed_by, claimed_date, released_date, stage  "
+			+ " from applications.view_application_tracker"
+			+ " where application_register_id = :applicationId"
+			+ " order by application_register_id,application_workflow_id",
+	        nativeQuery = true)
+	List<Object[]> trackApplicationStatus(Long applicationId);
+   
+   
    
 }
