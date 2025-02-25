@@ -28,5 +28,6 @@ public class CommonConstants {
 	public static final String MARRIAGE_LICENSE = "ML";
 	public static final String MARRIAGE_REGISTRATION = "MR";
 	public static final String MARRIAGE_CERTIFICATE = "MC";
+	public static final String APP_TYPE_AR = "12";
 
 }

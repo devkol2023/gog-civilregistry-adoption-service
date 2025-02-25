@@ -18,11 +18,17 @@ public interface AdoptionApplicationDocumentRepository extends JpaRepository<Ado
 
 	@Modifying
 	@Transactional
-	@Query(value = " update marriage.t_marriage_application_documents \r\n" + "	set is_active = false \r\n"
-			+ "			where marriage_application_doc_id in (:applicationDocId)", nativeQuery = true)
+	@Query(value = " update adoption.t_adoption_application_documents \r\n" + "	set is_active = false \r\n"
+			+ "			where adoption_application_doc_id in (:applicationDocId)", nativeQuery = true)
 	void updateFileIdIsActive(List<Integer> applicationDocId);
 
 	List<AdoptionApplicationDocumentEntity> findByApplicationRegisterIdAndIsActive(Long applicationRegisterId,
 			boolean b);
+	
+	@Modifying
+	@Transactional
+	@Query(value = " delete from adoption.t_marriage_application_documents tad where\r\n"
+			+ "			    tad.adoption_application_doc_id IN (:applicationDocId)", nativeQuery = true)
+	Integer deleteByFileId(List<Integer> applicationDocId);
 
 }
