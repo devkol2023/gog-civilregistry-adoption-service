@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
 import com.gog.civilregistry.adoption.model.ClaimApplicationWfRequest;
 import com.gog.civilregistry.adoption.model.GeneralInformation;
 import com.gog.civilregistry.adoption.model.GetWfNextStageRequest;
@@ -17,7 +18,6 @@ import com.gog.civilregistry.adoption.model.common.ServiceResponse;
 import com.gog.civilregistry.adoption.service.AdoptionService;
 import com.gog.civilregistry.adoption.service.WorkflowService;
 import com.gog.civilregistry.adoption.util.CommonConstants;
-import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
 
 @RestController
 @RequestMapping("/api")
@@ -69,7 +69,7 @@ public class AdoptionController {
 	public ServiceResponse getWfNextUser(@RequestBody GetWfNextUserRequest request) {
 		return workflowService.getWfNextUser(request);
 	}
-	
+
 	@PostMapping("/trackApplicationStatus")
 	public ServiceResponse trackApplicationStatus(@RequestBody ApplicationTrackStatus request) {
 		return adoptionService.trackApplicationStatus(request);

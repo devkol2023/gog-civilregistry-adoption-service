@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -23,6 +24,8 @@ import com.gog.civilregistry.adoption.dto.GetCivilRegistryNumberDTO;
 import com.gog.civilregistry.adoption.entity.AdoptionApplicationDocumentEntity;
 import com.gog.civilregistry.adoption.entity.ApplicationAdoptionDetailEntity;
 import com.gog.civilregistry.adoption.entity.ApplicationRegisterEntity;
+import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
+import com.gog.civilregistry.adoption.model.ApplicationTrackStatusResponse;
 import com.gog.civilregistry.adoption.model.ChildInformation;
 import com.gog.civilregistry.adoption.model.DeletedFileListModel;
 import com.gog.civilregistry.adoption.model.FatherInformation;
@@ -45,30 +48,6 @@ import com.gog.civilregistry.adoption.service.AdoptionService;
 import com.gog.civilregistry.adoption.service.DMSService;
 import com.gog.civilregistry.adoption.service.IntegrationApiService;
 import com.gog.civilregistry.adoption.util.CommonConstants;
-
-import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
-import com.gog.civilregistry.adoption.model.ApplicationTrackStatusResponse;
-import com.gog.civilregistry.adoption.model.common.ServiceResponse;
-import com.gog.civilregistry.adoption.repository.ApplicationAdoptionDetailRepository;
-import com.itextpdf.text.BaseColor;
-import com.itextpdf.text.Chunk;
-import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.Element;
-import com.itextpdf.text.Font;
-import com.itextpdf.text.FontFactory;
-import com.itextpdf.text.Image;
-import com.itextpdf.text.PageSize;
-import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.Phrase;
-import com.itextpdf.text.Rectangle;
-import com.itextpdf.text.html.WebColors;
-import com.itextpdf.text.pdf.BarcodeQRCode;
-import com.itextpdf.text.pdf.PdfContentByte;
-import com.itextpdf.text.pdf.PdfPCell;
-import com.itextpdf.text.pdf.PdfPTable;
-import com.itextpdf.text.pdf.PdfWriter;
-
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -98,10 +77,10 @@ public class AdoptionServiceImpl implements AdoptionService {
 
 	@Autowired
 	IntegrationApiService integrationApiService;
-	
+
 	@Autowired
 	ApplicationAdoptionDetailRepository applicationAdoptionDetailRepository;
-	
+
 	@Override
 	public ServiceResponse trackApplicationStatus(ApplicationTrackStatus request) {
 		logger.info("Entry Method: trackApplicationStatus");
