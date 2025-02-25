@@ -94,6 +94,12 @@ public class ApplicationAdoptionDetailEntity extends BaseEntity {
 
 	@Column(name = "father_parish")
 	private Short fatherParish;
+	
+	@Column(name = "father_village_town")
+	private Integer fatherVillageTown;
+	
+	@Column(name = "mother_village_town")
+	private Integer motherVillageTown;
 
 	@Column(name = "father_qualification")
 	private String fatherQualification;
