@@ -39,6 +39,9 @@ import com.gog.civilregistry.adoption.model.NewFileUploadResponse;
 import com.gog.civilregistry.adoption.model.ProcessApplicationModel;
 import com.gog.civilregistry.adoption.model.SaveARDraftRequest;
 import com.gog.civilregistry.adoption.model.SaveARDraftResponse;
+import com.gog.civilregistry.adoption.model.SearchApplicationACDto;
+import com.gog.civilregistry.adoption.model.SearchApplicationACRequest;
+import com.gog.civilregistry.adoption.model.SearchApplicationACResponse;
 import com.gog.civilregistry.adoption.model.SearchApplicationARDto;
 import com.gog.civilregistry.adoption.model.SearchApplicationARRequest;
 import com.gog.civilregistry.adoption.model.SearchApplicationARResponse;
@@ -1026,6 +1029,60 @@ public class AdoptionServiceImpl implements AdoptionService {
 		return response;
 	}
 
+	@Override
+	public ServiceResponse searchApplicationAC(SearchApplicationACRequest request) {
+		logger.info("Entry Method: searchApplicationAC");
+		ServiceResponse response = new ServiceResponse();
+
+		try {
+			Long applicationRegisterId = null;
+			String applicationNumber = request.getApplicationNumber();
+			String dateOfBirthStr = request.getDateOfBirthStr();
+
+			Date dateOfBirth = null;
+			SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+			if (dateOfBirthStr != null && !dateOfBirthStr.equals("")) {
+				try {
+					dateOfBirth = dateFormat.parse(dateOfBirthStr);
+				} catch (Exception e) {
+					System.out.println("Error parsing the date: " + e.getMessage());
+				}
+			}
+
+			String childName = request.getChildName();
+			String motherName = request.getMotherName();
+			String fatherName = request.getFatherName();
+			Integer parishId = request.getParishId();
+			Integer genderId = request.getGenderId();
+
+			if (applicationNumber != null && !applicationNumber.equals("")) {
+				applicationRegisterId = applicationAdoptionDetailRepository.getIdFromApplicationNo(applicationNumber);
+				if (applicationRegisterId == null || applicationRegisterId == 0l) {
+					response.setStatus(CommonConstants.SUCCESS_STATUS);
+					response.setMessage(CommonConstants.SUCCESS);
+					return response;
+				}
+			}
+
+			List<SearchApplicationACDto> searchApplicationACList = adoptionRepositoryCustom.searchApplicationAC(childName,
+					motherName, fatherName, dateOfBirth, applicationNumber, parishId, genderId);
+
+			SearchApplicationACResponse searchApplicationACResponse = new SearchApplicationACResponse();
+			searchApplicationACResponse.setSearchApplicationACResponse(searchApplicationACList);
+
+			response.setStatus(CommonConstants.SUCCESS_STATUS);
+			response.setMessage(CommonConstants.SUCCESS);
+			response.setResponseObject(searchApplicationACResponse);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.setStatus(CommonConstants.ERROR_STATUS);
+			response.setMessage("An error occurred while processing the request.");
+		}
+
+		return response;
+	}
+	
 	@Override
 	public ServiceResponse trackAppUser(TrackAppUserRequest request) {
 		logger.info("Entry Method: trackAppUser");
