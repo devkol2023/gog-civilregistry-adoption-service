@@ -26,6 +26,7 @@ import com.gog.civilregistry.adoption.entity.ApplicationAdoptionDetailEntity;
 import com.gog.civilregistry.adoption.entity.ApplicationRegisterEntity;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatusResponse;
+import com.gog.civilregistry.adoption.model.ChildAdoptionDetailsProjection;
 import com.gog.civilregistry.adoption.model.ChildInformation;
 import com.gog.civilregistry.adoption.model.DeletedFileListModel;
 import com.gog.civilregistry.adoption.model.DocListDto;
@@ -1177,6 +1178,30 @@ public class AdoptionServiceImpl implements AdoptionService {
 			throw new RuntimeException("Error while submitting the form", e);
 		}
 		logger.info("Exit Method " + " saveAndSubmitByDepartmentUsers");
+		return response;
+	}
+
+	@Override
+	public ServiceResponse getChildDetailsForAdoption(ChildInformation request) {
+		logger.info("Entry Method: getChildDetailsForAdoption");
+		ServiceResponse response = new ServiceResponse();
+		try {
+			ChildAdoptionDetailsProjection childInfoFromCitizenRegister = applicationAdoptionDetailRepository
+					.getChildInfoFromCitizenRegister(request.getChildCivilRegistryNumber());
+
+			if (childInfoFromCitizenRegister == null) {
+				childInfoFromCitizenRegister = applicationAdoptionDetailRepository
+						.getChildInfoFromManageCitizen(request.getChildCivilRegistryNumber());
+			}
+			response.setStatus(CommonConstants.SUCCESS_STATUS);
+			response.setMessage(CommonConstants.SUCCESS);
+			response.setResponseObject(childInfoFromCitizenRegister);
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.setStatus(CommonConstants.ERROR_STATUS);
+			response.setMessage("An error occurred while processing the request.");
+		}
+		logger.info("Exit Method " + " getChildDetailsForAdoption");
 		return response;
 	}
 
