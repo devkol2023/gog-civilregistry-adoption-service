@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
+import com.gog.civilregistry.adoption.model.ChildInformation;
 import com.gog.civilregistry.adoption.model.DocListRequest;
 import com.gog.civilregistry.adoption.model.GeneralInformation;
 import com.gog.civilregistry.adoption.model.SearchApplicationACRequest;
@@ -24,15 +25,19 @@ public interface AdoptionService {
 	ServiceResponse submitAdoptionRegistration(MultipartFile[] attachments, String request);
 
 	ServiceResponse getDocList(DocListRequest request);
-	
+
 	ServiceResponse searchApplicationAR(SearchApplicationARRequest request);
+
 	
 	ServiceResponse searchApplicationAC(SearchApplicationACRequest request);
 	
+
 	ServiceResponse trackAppUser(TrackAppUserRequest request);
-	
+
 	ServiceResponse getVault(VaultRequest request);
 
 	ServiceResponse saveAndSubmitByDepartmentUsers(MultipartFile[] attachments, String request);
+
+	ServiceResponse getChildDetailsForAdoption(ChildInformation request);
 
 }

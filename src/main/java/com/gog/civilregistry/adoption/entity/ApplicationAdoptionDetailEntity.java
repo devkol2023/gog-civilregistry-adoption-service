@@ -82,17 +82,26 @@ public class ApplicationAdoptionDetailEntity extends BaseEntity {
 	@Column(name = "father_citizen_id")
 	private Integer fatherCitizenId;
 
+	@Column(name = "father_citizen_id_old")
+	private Integer fatherCitizenIdOld;
+
 	@Column(name = "father_email_id")
 	private String fatherEmailId;
 
 	@Column(name = "father_first_name")
 	private String fatherFirstName;
+	
+	@Column(name = "father_first_name_old")
+	private String fatherFirstNameOld;
 
 	@Column(name = "father_marital_status")
 	private String fatherMaritalStatus;
 
 	@Column(name = "father_middle_name")
 	private String fatherMiddleName;
+	
+	@Column(name = "father_middle_name_old")
+	private String fatherMiddleNameOld;
 
 	@Column(name = "father_mobile_number")
 	private Long fatherMobileNumber;
@@ -117,6 +126,10 @@ public class ApplicationAdoptionDetailEntity extends BaseEntity {
 
 	@Column(name = "father_surname")
 	private String fatherSurname;
+	
+
+	@Column(name = "father_surname_old")
+	private String fatherSurnameOld;
 
 	private Short half;
 
@@ -143,21 +156,34 @@ public class ApplicationAdoptionDetailEntity extends BaseEntity {
 
 	@Column(name = "mother_citizen_id")
 	private Integer motherCitizenId;
+	
+	@Column(name = "mother_citizen_id_old")
+	private Integer motherCitizenIdOld;
 
 	@Column(name = "mother_email_id")
 	private String motherEmailId;
 
 	@Column(name = "mother_first_name")
 	private String motherFirstName;
+	
+	@Column(name = "mother_first_name_old")
+	private String motherFirstNameOld;
 
 	@Column(name = "mother_maiden_surname")
 	private String motherMaidenSurname;
+	
+	@Column(name = "mother_maiden_surname_old")
+	private String motherMaidenSurnameOld;
+	
 
 	@Column(name = "mother_marital_status")
 	private String motherMaritalStatus;
 
 	@Column(name = "mother_middle_name")
 	private String motherMiddleName;
+	
+	@Column(name = "mother_middle_name_old")
+	private String motherMiddleNameOld;
 
 	@Column(name = "mother_mobile_number")
 	private Long motherMobileNumber;

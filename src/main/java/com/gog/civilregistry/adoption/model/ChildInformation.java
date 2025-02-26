@@ -15,5 +15,16 @@ public class ChildInformation {
 
 	private Integer childCitizenId;
 	private String childCivilRegistryNumber;
+	private Integer fatherCitizenIdOld;
+	private String fatherFirstNameOld;
+	private String fatherMiddleNameOld;
+	private String fatherSurnameOld;
+	private String fatherCivilRegistryNumberOld;
+
+	private Integer motherCitizenIdOld;
+	private String motherFirstNameOld;
+	private String motherMiddleNameOld;
+	private String motherMaidenSurnameOld;
+	private String motherCivilRegistryNumberOld;
 
 }

@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.gog.civilregistry.adoption.dto.GetCivilRegistryNumberDTO;
 import com.gog.civilregistry.adoption.entity.ApplicationAdoptionDetailEntity;
+import com.gog.civilregistry.adoption.model.ChildAdoptionDetailsProjection;
 import com.gog.civilregistry.adoption.model.TownCodeProjection;
 import com.gog.civilregistry.adoption.model.TownProjection;
 
@@ -62,5 +63,39 @@ public interface ApplicationAdoptionDetailRepository extends JpaRepository<Appli
 	@Query(value = "SELECT * from adoption.fn_get_document_type_list(?1, ?2, ?3, ?4)", nativeQuery = true)
 	List<Object[]> getDocList(Long applicationRegisterId, Integer applicationTypeId, String roleCode,
 			Integer citizenId);
+
+	@Query(value = "select \r\n" + "tcr.citizen_id as childCitizenId,\r\n"
+			+ "tcr.citizen_civil_registry_number as childCivilRegistryNumber,\r\n"
+			+ "tcr.first_name as childFirstName,\r\n" + "tcr.last_name as childSurname,\r\n"
+			+ "tcr.middle_name as childMiddleName,\r\n" + "TO_CHAR(tcr.date_of_birth, 'DD/MM/YYYY')as  dateOfBirth,\r\n"
+			+ "tcr.parish_of_birth as parishOfBirth,\r\n" + "tcr.gender_id as gender,\r\n"
+			+ "tcr.father_citizen_id as fatherCitizenId, \r\n"
+			+ "tcr.father_civil_registry_number as fatherCivilRegistryNumber, \r\n"
+			+ "tcr.father_first_name as fatherFirstName,\r\n" + "tcr.father_middle_name as fatherMiddleName,\r\n"
+			+ " tcr.father_last_name as fatherSurname,\r\n" + " tcr.mother_citizen_id as motherCitizenId,\r\n"
+			+ " tcr.mother_civil_registry_number as motherCivilRegistryNumber,\r\n"
+			+ " tcr.mother_first_name as motherFirstName,\r\n" + " tcr.mother_middle_name as motherMiddleName,\r\n"
+			+ " tcr.mother_last_name as motherSurname,\r\n" + " tcr.mother_maiden_surname as motherMaidenSurname\r\n"
+			+ "from citizen.t_citizen_register tcr \r\n"
+			+ "where tcr.citizen_civil_registry_number = :civilRegistryNumber", nativeQuery = true)
+	ChildAdoptionDetailsProjection getChildInfoFromCitizenRegister(
+			@Param("civilRegistryNumber") String civilRegistryNumber);
+
+	@Query(value = "select \r\n" + "tmc.citizen_id as childCitizenId,\r\n"
+			+ "tmc.civil_registry_number as childCivilRegistryNumber,\r\n" + "tmc.first_name as childFirstName,\r\n"
+			+ "tmc.last_name as childSurname,\r\n" + "tmc.middle_name as childMiddleName,\r\n"
+			+ "TO_CHAR(tmc.date_of_birth, 'DD/MM/YYYY')as  dateOfBirth,\r\n" + "tmc.parish_id as parishOfBirth,\r\n"
+			+ "tmc.gender_id as gender,\r\n" + "null as fatherCitizenId, \r\n"
+			+ "null as fatherCivilRegistryNumber, \r\n" + "null as fatherFirstName,\r\n"
+			+ "null as fatherMiddleName,\r\n" + " null as fatherSurname,\r\n"
+			+ " tmc.mother_citizen_id as motherCitizenId,\r\n"
+			+ " tmcm.civil_registry_number as motherCivilRegistryNumber,\r\n"
+			+ " tmc.mother_firstname as motherFirstName,\r\n" + " tmc.mother_middlename as motherMiddleName,\r\n"
+			+ " tmc.mother_surname as motherSurname,\r\n" + " tmc.mother_surname as motherMaidenSurname\r\n"
+			+ "from citizen.t_manage_citizen tmc\r\n" + "left join citizen.t_manage_citizen tmcm\r\n"
+			+ "on tmcm.citizen_id = tmc.mother_citizen_id \r\n"
+			+ "where tmc.civil_registry_number = :civilRegistryNumber", nativeQuery = true)
+	ChildAdoptionDetailsProjection getChildInfoFromManageCitizen(
+			@Param("civilRegistryNumber") String civilRegistryNumber);
 
 }

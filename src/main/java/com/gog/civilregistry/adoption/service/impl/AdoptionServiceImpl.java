@@ -26,6 +26,7 @@ import com.gog.civilregistry.adoption.entity.ApplicationAdoptionDetailEntity;
 import com.gog.civilregistry.adoption.entity.ApplicationRegisterEntity;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatusResponse;
+import com.gog.civilregistry.adoption.model.ChildAdoptionDetailsProjection;
 import com.gog.civilregistry.adoption.model.ChildInformation;
 import com.gog.civilregistry.adoption.model.DeletedFileListModel;
 import com.gog.civilregistry.adoption.model.DocListDto;
@@ -96,7 +97,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 
 	@Autowired
 	ApplicationAdoptionDetailRepository applicationAdoptionDetailRepository;
-	
+
 	@Autowired
 	ApplicationRepositoryCustom applicationRepositoryCustom;
 
@@ -559,7 +560,8 @@ public class AdoptionServiceImpl implements AdoptionService {
 			childInformation = modelMapper.map(applicationAR, ChildInformation.class);
 
 			List<Integer> citizenIds = Arrays.asList(fatherInformation.getFatherCitizenId(),
-					motherInformation.getMotherCitizenId(), childInformation.getChildCitizenId()
+					motherInformation.getMotherCitizenId(), childInformation.getChildCitizenId(),
+					childInformation.getFatherCitizenIdOld(), childInformation.getMotherCitizenIdOld()
 
 			);
 
@@ -577,6 +579,14 @@ public class AdoptionServiceImpl implements AdoptionService {
 				}
 				if (citizenDetails.getCitizen_id().equals(childInformation.getChildCitizenId())) {
 					childInformation.setChildCivilRegistryNumber(citizenDetails.getCivilRegistryNumber());
+				}
+
+				if (citizenDetails.getCitizen_id().equals(childInformation.getFatherCitizenIdOld())) {
+					childInformation.setFatherCivilRegistryNumberOld(citizenDetails.getCivilRegistryNumber());
+				}
+
+				if (citizenDetails.getCitizen_id().equals(childInformation.getMotherCitizenIdOld())) {
+					childInformation.setMotherCivilRegistryNumberOld(citizenDetails.getCivilRegistryNumber());
 				}
 
 			}
@@ -654,7 +664,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 				// processNod.setInstituteId(request.getGeneralInformation().getInstituteId());
 				// processNod.setRoleId(2);
 				processNod.setUserId(request.getLoginUserId());
-				processNod.setApplicationTypeId(12);
+				processNod.setApplicationTypeId(request.getGeneralInformation().getApplicationTypeId());
 				processNod.setParishId(request.getGeneralInformation().getInstituteParish());
 				processNod.setStatusId(workflowInfoRequest.getNextStatusId());
 				processNod.setCitizenId(null);
@@ -879,7 +889,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 			WorkflowUpdateModel workflowUpdateModel = new WorkflowUpdateModel();
 			modelMapper.map(workflowInfoRequest, workflowUpdateModel);
 			workflowUpdateModel.setApplicationRegisterId(applicationRegisterId);
-			workflowUpdateModel.setApplicationTypeId(Integer.valueOf(CommonConstants.APP_TYPE_AR));
+			workflowUpdateModel.setApplicationTypeId(request.getGeneralInformation().getApplicationTypeId());
 			workflowUpdateModel.setIsDraft(0);
 
 			Map<String, Object> resultMap = adoptionRepositoryCustom.updateWorkflowDetails(workflowUpdateModel);
@@ -964,7 +974,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 		return response;
 
 	}
-	
+
 	@Override
 	public ServiceResponse searchApplicationAR(SearchApplicationARRequest request) {
 		logger.info("Entry Method: searchApplicationAR");
@@ -1000,8 +1010,8 @@ public class AdoptionServiceImpl implements AdoptionService {
 				}
 			}
 
-			List<SearchApplicationARDto> searchApplicationARList = adoptionRepositoryCustom.searchApplicationAR(childName,
-					motherName, fatherName, dateOfBirth, applicationNumber, parishId, genderId);
+			List<SearchApplicationARDto> searchApplicationARList = adoptionRepositoryCustom.searchApplicationAR(
+					childName, motherName, fatherName, dateOfBirth, applicationNumber, parishId, genderId);
 
 			SearchApplicationARResponse searchApplicationARResponse = new SearchApplicationARResponse();
 			searchApplicationARResponse.setSearchApplicationARResponse(searchApplicationARList);
@@ -1018,7 +1028,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 
 		return response;
 	}
-	
+
 	@Override
 	public ServiceResponse searchApplicationAC(SearchApplicationACRequest request) {
 		logger.info("Entry Method: searchApplicationAC");
@@ -1098,7 +1108,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 		return response;
 
 	}
-	
+
 	@Override
 	public ServiceResponse getVault(VaultRequest request) {
 		logger.info("Entry Method " + " getVault");
@@ -1121,7 +1131,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 
 	@Override
 	public ServiceResponse saveAndSubmitByDepartmentUsers(MultipartFile[] files, String requestStr) {
-		
+
 		logger.info("Entry Method " + " saveAndSubmitByDepartmentUsers");
 		ServiceResponse response = new ServiceResponse();
 		List<Integer> list = new ArrayList<Integer>();
@@ -1129,13 +1139,13 @@ public class AdoptionServiceImpl implements AdoptionService {
 		String dmsReferenceId = null;
 		List<UploadFileData> docEntityResponseList = new ArrayList<UploadFileData>();
 		Integer yearOfDeath = null;
-		
+
 		try {
-			
+
 			SaveARDraftRequest request = null;
 			requestStr = requestStr.replaceAll("\\n", "").replaceAll("\\t", "");
 			request = mapper.readValue(requestStr, SaveARDraftRequest.class);
-			
+
 			if (files != null) {
 				if (files.length > 0) {
 					// only upload those files whole id = 0 or null
@@ -1188,50 +1198,45 @@ public class AdoptionServiceImpl implements AdoptionService {
 				documentAttachment.setApplicationDocId(docEntity.getApplicationDocId());
 				docEntityResponseList.add(documentAttachment);
 			}
-			
-			
+
 			WorkflowInformation workflowInformation = request.getWorkflowInformation();
 
-			if (request.getGeneralInformation().getApplicationTypeCode() != null
-					&& request.getGeneralInformation().getApplicationTypeCode().equalsIgnoreCase(CommonConstants.ADOPTION_REGISTRATION)) {
+			if (request.getGeneralInformation().getApplicationTypeCode() != null && request.getGeneralInformation()
+					.getApplicationTypeCode().equalsIgnoreCase(CommonConstants.ADOPTION_REGISTRATION)) {
 
-				
-                String entryNo = request.getGeneralInformation().getEntryNo();
-				
+				String entryNo = request.getGeneralInformation().getEntryNo();
 
-                ApplicationAdoptionDetailEntity applicationEntity = applicationAdoptionDetailRepository
+				ApplicationAdoptionDetailEntity applicationEntity = applicationAdoptionDetailRepository
 						.findByApplicationRegisterId(request.getGeneralInformation().getApplicationRegisterId());
 
-								
 				if (applicationEntity != null) {
 					applicationEntity.setEntryNo(entryNo);
-					ApplicationAdoptionDetailEntity savedApplicationEntity = applicationAdoptionDetailRepository.save(applicationEntity);
+					ApplicationAdoptionDetailEntity savedApplicationEntity = applicationAdoptionDetailRepository
+							.save(applicationEntity);
 				}
-			} 
-			
+			}
+
 			WorkflowUpdateModel workflowUpdateModel = new WorkflowUpdateModel();
 			modelMapper.map(workflowInformation, workflowUpdateModel);
-			
+
 			workflowUpdateModel.setApplicationRegisterId(request.getGeneralInformation().getApplicationRegisterId());
 			workflowUpdateModel.setApplicationTypeId(request.getGeneralInformation().getApplicationTypeId());
 			workflowUpdateModel.setIsDraft(request.getIsDraft());
 
 			Map<String, Object> resultMap = adoptionRepositoryCustom.updateWorkflowDetails(workflowUpdateModel);
-			
+
 			SaveARDraftResponse responseObj = new SaveARDraftResponse();
 
-			
 			responseObj.setGeneralInformation(request.getGeneralInformation());
 			responseObj.setWorkflowInformation(request.getWorkflowInformation());
 			responseObj.setUploadFileData(docEntityResponseList);
 
 			responseObj.setLoginUserId(request.getLoginUserId());
 			responseObj.setIsDraft(request.getIsDraft());
-			
+
 			response.setStatus(CommonConstants.SUCCESS_STATUS);
 			response.setMessage(CommonConstants.SUCCESS_MSG);
-			
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			response.setStatus(CommonConstants.ERROR_STATUS);
@@ -1239,6 +1244,30 @@ public class AdoptionServiceImpl implements AdoptionService {
 			throw new RuntimeException("Error while submitting the form", e);
 		}
 		logger.info("Exit Method " + " saveAndSubmitByDepartmentUsers");
+		return response;
+	}
+
+	@Override
+	public ServiceResponse getChildDetailsForAdoption(ChildInformation request) {
+		logger.info("Entry Method: getChildDetailsForAdoption");
+		ServiceResponse response = new ServiceResponse();
+		try {
+			ChildAdoptionDetailsProjection childInfoFromCitizenRegister = applicationAdoptionDetailRepository
+					.getChildInfoFromCitizenRegister(request.getChildCivilRegistryNumber());
+
+			if (childInfoFromCitizenRegister == null) {
+				childInfoFromCitizenRegister = applicationAdoptionDetailRepository
+						.getChildInfoFromManageCitizen(request.getChildCivilRegistryNumber());
+			}
+			response.setStatus(CommonConstants.SUCCESS_STATUS);
+			response.setMessage(CommonConstants.SUCCESS);
+			response.setResponseObject(childInfoFromCitizenRegister);
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.setStatus(CommonConstants.ERROR_STATUS);
+			response.setMessage("An error occurred while processing the request.");
+		}
+		logger.info("Exit Method " + " getChildDetailsForAdoption");
 		return response;
 	}
 

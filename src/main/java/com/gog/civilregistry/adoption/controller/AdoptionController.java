@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
+import com.gog.civilregistry.adoption.model.ChildInformation;
 import com.gog.civilregistry.adoption.model.ClaimApplicationWfRequest;
 import com.gog.civilregistry.adoption.model.DocListRequest;
 import com.gog.civilregistry.adoption.model.GeneralInformation;
@@ -18,11 +19,11 @@ import com.gog.civilregistry.adoption.model.ReleaseApplicationWfRequest;
 import com.gog.civilregistry.adoption.model.SearchApplicationACRequest;
 import com.gog.civilregistry.adoption.model.SearchApplicationARRequest;
 import com.gog.civilregistry.adoption.model.TrackAppUserRequest;
+import com.gog.civilregistry.adoption.model.VaultRequest;
 import com.gog.civilregistry.adoption.model.common.ServiceResponse;
 import com.gog.civilregistry.adoption.service.AdoptionService;
 import com.gog.civilregistry.adoption.service.WorkflowService;
 import com.gog.civilregistry.adoption.util.CommonConstants;
-import com.gog.civilregistry.adoption.model.VaultRequest;
 
 @RestController
 @RequestMapping("/api")
@@ -117,22 +118,27 @@ public class AdoptionController {
 		}
 		return response;
 	}
-	
+
 	@PostMapping("/searchApplicationAR")
 	public ServiceResponse searchApplicationAR(@RequestBody SearchApplicationARRequest request) {
 		return adoptionService.searchApplicationAR(request);
 	}
-	
+
 	@PostMapping("/trackAppUser")
 	public ServiceResponse trackAppUser(@RequestBody TrackAppUserRequest request) {
 		return adoptionService.trackAppUser(request);
 	}
-	
+
 	@PostMapping("/getVault")
 	public ServiceResponse getVault(@RequestBody VaultRequest request) {
 		return adoptionService.getVault(request);
 	}
-	
+
+	@PostMapping("/getChildDetailsForAdoption")
+	public ServiceResponse getChildDetailsForAdoption(@RequestBody ChildInformation request) {
+		return adoptionService.getChildDetailsForAdoption(request);
+	}
+
 	@PostMapping("/saveAndSubmitByDepartmentUsers")
 	public ServiceResponse saveAndSubmitByDepartmentUsers(
 			@RequestParam(value = "attachments", required = false) MultipartFile[] attachments, String request) {
@@ -145,10 +151,12 @@ public class AdoptionController {
 		}
 		return response;
 	}
+
 	
 	@PostMapping("/searchApplicationAC")
 	public ServiceResponse searchApplicationAC(@RequestBody SearchApplicationACRequest request) {
 		return adoptionService.searchApplicationAC(request);
 	}
 	
+
 }
