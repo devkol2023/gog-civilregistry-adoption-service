@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
 import com.gog.civilregistry.adoption.model.DocListRequest;
 import com.gog.civilregistry.adoption.model.GeneralInformation;
+import com.gog.civilregistry.adoption.model.SearchApplicationACRequest;
 import com.gog.civilregistry.adoption.model.SearchApplicationARRequest;
 import com.gog.civilregistry.adoption.model.TrackAppUserRequest;
 import com.gog.civilregistry.adoption.model.VaultRequest;
@@ -25,6 +26,8 @@ public interface AdoptionService {
 	ServiceResponse getDocList(DocListRequest request);
 	
 	ServiceResponse searchApplicationAR(SearchApplicationARRequest request);
+	
+	ServiceResponse searchApplicationAC(SearchApplicationACRequest request);
 	
 	ServiceResponse trackAppUser(TrackAppUserRequest request);
 	

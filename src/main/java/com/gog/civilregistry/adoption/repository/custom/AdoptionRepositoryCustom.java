@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gog.civilregistry.adoption.model.ProcessApplicationModel;
+import com.gog.civilregistry.adoption.model.SearchApplicationACDto;
 import com.gog.civilregistry.adoption.model.SearchApplicationARDto;
 import com.gog.civilregistry.adoption.model.TrackAppUserDto;
 import com.gog.civilregistry.adoption.model.UpdateCertificateFileRequest;
@@ -378,7 +379,95 @@ public class AdoptionRepositoryCustom {
 	    return trackApplicationUserList;
 	}
 
+	public List<SearchApplicationACDto> searchApplicationAC(
+            String childName, String motherName, String fatherName, Date dateOfBirth, 
+            String applicationNumber, Integer parishId, Integer genderId) {
 
+        StringBuilder sqlQuery = new StringBuilder();
+        sqlQuery.append("SELECT tar.application_register_id, tar.application_no, ")
+                .append("CONCAT_WS(' ', taad.child_first_name, taad.child_middle_name, taad.child_surname) AS child_full_name, ")
+                .append("CONCAT_WS(' ', taad.mother_first_name, taad.mother_middle_name, taad.mother_surname) AS mother_full_name, ")
+                .append("CONCAT_WS(' ', taad.father_first_name, taad.father_middle_name, taad.father_surname) AS father_full_name, ")
+                .append("mg.geography_name AS parish_of_birth, ")
+                .append("TO_CHAR(taad.child_date_of_birth, 'DD/MM/YYYY') AS date_of_birth, ")
+                .append("mdv.data_description AS gender ")
+                .append("FROM applications.t_application_register tar ")
+                .append("INNER JOIN adoption.t_application_adoption_certificate_details taacd ")
+                .append("ON tar.application_register_id = taacd.application_register_id ")
+                .append("INNER JOIN adoption.t_application_adoption_details taad ")
+                .append("ON taacd.application_adoption_id = taad.application_adoption_id ")
+                .append("LEFT JOIN masters.m_geography mg ")
+                .append("ON taad.child_parish = mg.geography_id ")
+                .append("LEFT JOIN masters.m_master_data_value mdv ")
+                .append("ON taad.child_gender = mdv.data_id ")
+                .append("WHERE 1=1 ");
+
+        // Applying filters dynamically
+        if (applicationNumber != null && !applicationNumber.trim().isEmpty()) {
+            sqlQuery.append(" AND tar.application_no = :applicationNumber");
+        }
+        if (childName != null && !childName.trim().isEmpty()) {
+            sqlQuery.append(" AND LOWER(taad.child_first_name) = LOWER(:childName)");
+        }
+        if (motherName != null && !motherName.trim().isEmpty()) {
+            sqlQuery.append(" AND LOWER(taad.mother_first_name) = LOWER(:motherName)");
+        }
+        if (fatherName != null && !fatherName.trim().isEmpty()) {
+            sqlQuery.append(" AND LOWER(taad.father_first_name) = LOWER(:fatherName)");
+        }
+        if (dateOfBirth != null) {
+            sqlQuery.append(" AND taad.child_date_of_birth = :dateOfBirth");
+        }
+        if (parishId != null && parishId != 0) {
+            sqlQuery.append(" AND taad.child_parish = :parishId");
+        }
+        if (genderId != null && genderId != 0) {
+            sqlQuery.append(" AND taad.child_gender = :genderId");
+        }
+
+        Query query = entityManager.createNativeQuery(sqlQuery.toString());
+
+        // Setting Query Parameters Dynamically
+        if (applicationNumber != null && !applicationNumber.trim().isEmpty()) {
+            query.setParameter("applicationNumber", applicationNumber);
+        }
+        if (childName != null && !childName.trim().isEmpty()) {
+            query.setParameter("childName", childName.trim());
+        }
+        if (motherName != null && !motherName.trim().isEmpty()) {
+            query.setParameter("motherName", motherName.trim());
+        }
+        if (fatherName != null && !fatherName.trim().isEmpty()) {
+            query.setParameter("fatherName", fatherName.trim());
+        }
+        if (dateOfBirth != null) {
+            query.setParameter("dateOfBirth", dateOfBirth);
+        }
+        if (parishId != null && parishId != 0) {
+            query.setParameter("parishId", parishId);
+        }
+        if (genderId != null && genderId != 0) {
+            query.setParameter("genderId", genderId);
+        }
+
+        List<Object[]> resultList = query.getResultList();
+
+        // Mapping results to DTO
+        return resultList.stream().map(result -> {
+            Object[] row = (Object[]) result;
+            SearchApplicationACDto dto = new SearchApplicationACDto();
+            dto.setApplicationRegisterId(row[0] != null ? ((Number) row[0]).longValue() : 0L);
+            dto.setApplicationNumber(row[1] != null ? (String) row[1] : "");
+            dto.setChildName(row[2] != null ? (String) row[2] : "");
+            dto.setMotherName(row[3] != null ? (String) row[3] : "");
+            dto.setFatherName(row[4] != null ? (String) row[4] : "");
+            dto.setParishOfBirth(row[5] != null ? (String) row[5] : "");
+            dto.setDateOfBirth(row[6] != null ? (String) row[6] : "");
+            dto.setGender(row[7] != null ? (String) row[7] : "");
+            return dto;
+        }).collect(Collectors.toList());
+    
+}
 
 
 }
