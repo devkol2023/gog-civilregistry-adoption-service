@@ -327,15 +327,39 @@ public class AdoptionRepositoryCustom {
         }).collect(Collectors.toList());
     }
 	
+	
 	public List<TrackAppUserDto> trackApplicationUserList(Integer loggedInUserId) {
 	    StringBuilder sqlQuery = new StringBuilder();
 
 	    sqlQuery.append("SELECT DISTINCT ")
 	        .append("tar.application_no AS applicationNo, ")
-	        .append("concat_ws(', ', taad.child_surname, concat_ws(' ', taad.child_first_name, taad.child_middle_name)) AS childName, ")
-	        .append("concat_ws(', ', taad.mother_surname, concat_ws(' ', taad.mother_first_name, taad.mother_middle_name)) AS motherName, ")
-	        .append("concat_ws(', ', taad.father_surname, concat_ws(' ', taad.father_first_name, taad.father_middle_name)) AS fatherName, ")
-	        .append("TO_CHAR(taad.child_date_of_birth, 'DD/MM/YYYY') AS dateOfBirth, ")
+
+	        .append("CASE ")
+	        .append("    WHEN mat.application_type_code = 'AR' THEN ")
+	        .append("        concat_ws(', ', taad.child_surname, concat_ws(' ', taad.child_first_name, taad.child_middle_name)) ")
+	        .append("    WHEN mat.application_type_code = 'AC' THEN ")
+	        .append("        concat_ws(', ', taad_ac.child_surname, concat_ws(' ', taad_ac.child_first_name, taad_ac.child_middle_name)) ")
+	        .append("END AS childName, ")
+
+	        .append("CASE ")
+	        .append("    WHEN mat.application_type_code = 'AR' THEN ")
+	        .append("        concat_ws(', ', taad.mother_surname, concat_ws(' ', taad.mother_first_name, taad.mother_middle_name)) ")
+	        .append("    WHEN mat.application_type_code = 'AC' THEN ")
+	        .append("        concat_ws(', ', taad_ac.mother_surname, concat_ws(' ', taad_ac.mother_first_name, taad_ac.mother_middle_name)) ")
+	        .append("END AS motherName, ")
+
+	        .append("CASE ")
+	        .append("    WHEN mat.application_type_code = 'AR' THEN ")
+	        .append("        concat_ws(', ', taad.father_surname, concat_ws(' ', taad.father_first_name, taad.father_middle_name)) ")
+	        .append("    WHEN mat.application_type_code = 'AC' THEN ")
+	        .append("        concat_ws(', ', taad_ac.father_surname, concat_ws(' ', taad_ac.father_first_name, taad_ac.father_middle_name)) ")
+	        .append("END AS fatherName, ")
+
+	        .append("CASE ")
+	        .append("    WHEN mat.application_type_code = 'AR' THEN TO_CHAR(taad.child_date_of_birth, 'DD/MM/YYYY') ")
+	        .append("    WHEN mat.application_type_code = 'AC' THEN TO_CHAR(taad_ac.child_date_of_birth, 'DD/MM/YYYY') ")
+	        .append("END AS dateOfBirth, ")
+
 	        .append("mws.display_stage_name AS status, ")
 	        .append("mat.application_type_name AS applicationType ")
 
@@ -346,15 +370,29 @@ public class AdoptionRepositoryCustom {
 	        .append("ON tar.application_type_id = mat.application_type_id ")
 	        .append("INNER JOIN masters.m_workflow_stage mws ")
 	        .append("ON taw.stage_id = mws.stage_id ")
-	        .append("INNER JOIN adoption.t_application_adoption_details taad ")
+
+	        // Join for application type 'AR'
+	        .append("LEFT JOIN adoption.t_application_adoption_details taad ")
 	        .append("ON tar.application_register_id = taad.application_register_id ")
+	        .append("AND mat.application_type_code = 'AR' ")
+
+	        // Join for application type 'AC'
+	        .append("LEFT JOIN adoption.t_application_adoption_certificate_details taac ")
+	        .append("ON tar.application_register_id = taac.application_register_id ")
+	        .append("AND taac.is_active = true ")
+	        .append("AND mat.application_type_code = 'AC' ")
+
+	        .append("LEFT JOIN adoption.t_application_adoption_details taad_ac ")
+	        .append("ON taac.application_adoption_id = taad_ac.application_adoption_id ")
+	        .append("AND taad_ac.is_active = true ")
+	        .append("AND mat.application_type_code = 'AC' ")
 
 	        .append("WHERE (taw.assigned_from_user = :loggedInUserId OR taw.assigned_to_user = :loggedInUserId) ")
 	        .append("AND taw.is_active = true ")
 	        .append("AND tar.is_active = true ")
 	        .append("AND mws.is_active = true ")
 	        .append("AND mat.module_code = 'ADOPTION' ")
-	        .append("AND mat.application_type_code = 'AR' ")
+	        .append("AND mat.application_type_code IN ('AR', 'AC') ")
 	        .append("AND taw.stage_id <> 1; ");
 
 	    Query query = entityManager.createNativeQuery(sqlQuery.toString());
@@ -378,6 +416,7 @@ public class AdoptionRepositoryCustom {
 
 	    return trackApplicationUserList;
 	}
+
 
 	public List<SearchApplicationACDto> searchApplicationAC(
             String childName, String motherName, String fatherName, Date dateOfBirth, 
