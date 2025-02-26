@@ -398,8 +398,7 @@ public class AdoptionRepositoryCustom {
                 .append("ON taacd.application_adoption_id = taad.application_adoption_id ")
                 .append("LEFT JOIN masters.m_geography mg ")
                 .append("ON taad.child_parish = mg.geography_id ")
-                .append("LEFT JOIN masters.m_master_data_value mdv ")
-                .append("ON taad.child_gender = mdv.data_id ")
+                .append("LEFT JOIN masters.m_master_data_value mdv ON mdv.master_data_value_id = taad.child_gender ")
                 .append("WHERE 1=1 ");
 
         // Applying filters dynamically
