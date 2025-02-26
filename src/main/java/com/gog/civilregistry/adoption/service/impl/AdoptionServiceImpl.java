@@ -557,7 +557,8 @@ public class AdoptionServiceImpl implements AdoptionService {
 			childInformation = modelMapper.map(applicationAR, ChildInformation.class);
 
 			List<Integer> citizenIds = Arrays.asList(fatherInformation.getFatherCitizenId(),
-					motherInformation.getMotherCitizenId(), childInformation.getChildCitizenId()
+					motherInformation.getMotherCitizenId(), childInformation.getChildCitizenId(),
+					childInformation.getFatherCitizenIdOld(), childInformation.getMotherCitizenIdOld()
 
 			);
 
@@ -575,6 +576,14 @@ public class AdoptionServiceImpl implements AdoptionService {
 				}
 				if (citizenDetails.getCitizen_id().equals(childInformation.getChildCitizenId())) {
 					childInformation.setChildCivilRegistryNumber(citizenDetails.getCivilRegistryNumber());
+				}
+
+				if (citizenDetails.getCitizen_id().equals(childInformation.getFatherCitizenIdOld())) {
+					childInformation.setFatherCivilRegistryNumberOld(citizenDetails.getCivilRegistryNumber());
+				}
+
+				if (citizenDetails.getCitizen_id().equals(childInformation.getMotherCitizenIdOld())) {
+					childInformation.setMotherCivilRegistryNumberOld(citizenDetails.getCivilRegistryNumber());
 				}
 
 			}
