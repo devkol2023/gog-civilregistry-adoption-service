@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,9 @@ import com.gog.civilregistry.adoption.dto.GetCivilRegistryNumberDTO;
 import com.gog.civilregistry.adoption.entity.AdoptionApplicationDocumentEntity;
 import com.gog.civilregistry.adoption.entity.ApplicationAdoptionDetailEntity;
 import com.gog.civilregistry.adoption.entity.ApplicationRegisterEntity;
+import com.gog.civilregistry.adoption.model.ACDownloadRequest;
+import com.gog.civilregistry.adoption.model.ACDownloadResponse;
+import com.gog.civilregistry.adoption.model.ACDownloadResponseDTO;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatusResponse;
 import com.gog.civilregistry.adoption.model.ChildAdoptionDetailsProjection;
@@ -1268,6 +1272,73 @@ public class AdoptionServiceImpl implements AdoptionService {
 			response.setMessage("An error occurred while processing the request.");
 		}
 		logger.info("Exit Method " + " getChildDetailsForAdoption");
+		return response;
+	}
+	
+	@Override
+	public ServiceResponse searchACDownload(ACDownloadRequest request) {
+		logger.info("Entry Method: searchACDownload");
+		ServiceResponse response = new ServiceResponse();
+
+		try {
+
+			String formattedDateOfBirth = null;
+			if (request.getDateOfBirthStr() != null && !request.getDateOfBirthStr().trim().isEmpty()) {
+				SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+				Date parsedDate = dateFormat.parse(request.getDateOfBirthStr());
+				formattedDateOfBirth = dateFormat.format(parsedDate);
+			}
+
+			logger.info("Formatted Date of adoption: {}", formattedDateOfBirth);
+
+			List<ACDownloadResponseDTO> dtoList = applicationRegisterRepository.searchACDownloadList(
+					request.getChildCivilRegistryNumber(),
+					request.getChildName(), request.getMotherName(), request.getFatherName(),
+					formattedDateOfBirth, request.getParishId(), request.getGenderId());
+
+			if (dtoList == null || dtoList.isEmpty()) {
+				logger.warn("No records found for the given input: {}", request);
+				response.setStatus(CommonConstants.SUCCESS_STATUS);
+				response.setMessage("No records found.");
+				response.setResponseObject(Collections.emptyList());
+				return response;
+			}
+
+			List<ACDownloadResponse> responseList = new ArrayList<>();
+			for (ACDownloadResponseDTO dto : dtoList) {
+				ACDownloadResponse responseObj = new ACDownloadResponse();
+				responseObj.setChildCitizenId(dto.getChildCitizenId());
+				responseObj.setChildCivilRegistryNumber(dto.getChildCivilRegistryNumber());
+				responseObj.setMotherCitizenId(dto.getMotherCitizenId());
+				responseObj.setFatherCitizenId(dto.getFatherCitizenId());
+				responseObj.setChildName(dto.getChildName());
+				responseObj.setMotherName(dto.getMotherName());
+				responseObj.setFatherName(dto.getFatherName());
+				responseObj.setDateOfBirth(dto.getDateOfBirth());
+				responseObj.setParishOfBirth(dto.getParishOfBirth());
+				responseObj.setAdoptionCertificateNumber(dto.getAdoptionCertificateNumber());
+				responseObj.setAdoptionCertificateDmsId(dto.getAdoptionCertificateDmsId());
+
+				responseList.add(responseObj);
+			}
+
+			if (responseList.isEmpty()) {
+				response.setStatus(CommonConstants.SUCCESS_STATUS);
+				response.setMessage("No records found with an approved birth certificate.");
+				response.setResponseObject(Collections.emptyList());
+			} else {
+				response.setStatus(CommonConstants.SUCCESS_STATUS);
+				response.setMessage(CommonConstants.SUCCESS);
+				response.setResponseObject(responseList);
+			}
+
+		} catch (Exception e) {
+			logger.error("Error occurred in searchACDownload: {}", e.getMessage(), e);
+			response.setStatus(CommonConstants.ERROR_STATUS);
+			response.setMessage("An error occurred while processing the request.");
+		}
+
+		logger.info("Exit Method: searchACDownload");
 		return response;
 	}
 

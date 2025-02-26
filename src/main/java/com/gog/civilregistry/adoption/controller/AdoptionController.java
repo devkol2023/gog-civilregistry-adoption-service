@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.gog.civilregistry.adoption.model.ACDownloadRequest;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
 import com.gog.civilregistry.adoption.model.ChildInformation;
 import com.gog.civilregistry.adoption.model.ClaimApplicationWfRequest;
@@ -158,5 +159,9 @@ public class AdoptionController {
 		return adoptionService.searchApplicationAC(request);
 	}
 	
+	@PostMapping("/searchACDownload")
+	public ServiceResponse searchACDownload(@RequestBody ACDownloadRequest request) {
+		return adoptionService.searchACDownload(request);
+	}
 
 }
