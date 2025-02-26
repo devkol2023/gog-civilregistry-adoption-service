@@ -536,7 +536,8 @@ public class AdoptionServiceImpl implements AdoptionService {
 //		String formattedDate = formatter.format(currentDate);
 
 		try {
-			applicationRegisterEntity = applicationRegisterRepository.findByApplicationNo(request.getApplicationNo());
+			applicationRegisterEntity = applicationRegisterRepository
+					.findByApplicationRegisterId(request.getApplicationRegisterId());
 			applicationAR = adoptionDetailRepository
 					.findByApplicationRegisterId(applicationRegisterEntity.getApplicationRegisterId());
 			List<AdoptionApplicationDocumentEntity> docEntityList = documentRepository
@@ -1068,8 +1069,8 @@ public class AdoptionServiceImpl implements AdoptionService {
 				}
 			}
 
-			List<SearchApplicationACDto> searchApplicationACList = adoptionRepositoryCustom.searchApplicationAC(childName,
-					motherName, fatherName, dateOfBirth, applicationNumber, parishId, genderId);
+			List<SearchApplicationACDto> searchApplicationACList = adoptionRepositoryCustom.searchApplicationAC(
+					childName, motherName, fatherName, dateOfBirth, applicationNumber, parishId, genderId);
 
 			SearchApplicationACResponse searchApplicationACResponse = new SearchApplicationACResponse();
 			searchApplicationACResponse.setSearchApplicationACResponse(searchApplicationACList);
@@ -1086,7 +1087,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 
 		return response;
 	}
-	
+
 	@Override
 	public ServiceResponse trackAppUser(TrackAppUserRequest request) {
 		logger.info("Entry Method: trackAppUser");
@@ -1274,7 +1275,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 		logger.info("Exit Method " + " getChildDetailsForAdoption");
 		return response;
 	}
-	
+
 	@Override
 	public ServiceResponse searchACDownload(ACDownloadRequest request) {
 		logger.info("Entry Method: searchACDownload");
@@ -1292,9 +1293,8 @@ public class AdoptionServiceImpl implements AdoptionService {
 			logger.info("Formatted Date of adoption: {}", formattedDateOfBirth);
 
 			List<ACDownloadResponseDTO> dtoList = applicationRegisterRepository.searchACDownloadList(
-					request.getChildCivilRegistryNumber(),
-					request.getChildName(), request.getMotherName(), request.getFatherName(),
-					formattedDateOfBirth, request.getParishId(), request.getGenderId());
+					request.getChildCivilRegistryNumber(), request.getChildName(), request.getMotherName(),
+					request.getFatherName(), formattedDateOfBirth, request.getParishId(), request.getGenderId());
 
 			if (dtoList == null || dtoList.isEmpty()) {
 				logger.warn("No records found for the given input: {}", request);
