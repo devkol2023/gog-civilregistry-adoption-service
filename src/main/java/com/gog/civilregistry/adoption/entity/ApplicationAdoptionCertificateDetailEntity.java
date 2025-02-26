@@ -34,6 +34,9 @@ public class ApplicationAdoptionCertificateDetailEntity implements Serializable 
 
 	@Column(name="application_register_id")
 	private Long applicationRegisterId;
+	
+	@Column(name="application_adoption_registration_id")
+	private Long applicationAdoptionRegistrationId;
 
 	@Column(name="created_by")
 	private Integer createdBy;
@@ -70,6 +73,15 @@ public class ApplicationAdoptionCertificateDetailEntity implements Serializable 
 	public ApplicationAdoptionCertificateDetailEntity() {
 	}
 
+	
+	public Long getApplicationAdoptionRegistrationId() {
+		return this.applicationAdoptionRegistrationId;
+	}
+
+	public void setApplicationAdoptionRegistrationId(Long applicationAdoptionRegistrationId) {
+		this.applicationAdoptionRegistrationId = applicationAdoptionRegistrationId;
+	}
+	
 	public Long getApplicationAdoptionCertificateId() {
 		return this.applicationAdoptionCertificateId;
 	}
