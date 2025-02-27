@@ -42,7 +42,7 @@ public class ApplicationRepositoryCustom {
 						(String) row[6], (String) row[7],
 						row[8] != null ? ((Timestamp) row[8]).toLocalDateTime().toLocalDate() : null, (Integer) row[9], (Integer) row[10], 
 						(String) row[11], (Integer) row[12], (Integer) row[13], 
-						(Integer) row[14], (String) row[15], (Integer) row[16], (String) row[17], (Integer) row[18], (Integer) row[19], (String) row[20], (Integer) row[21]))
+						(Integer) row[14], (String) row[15], (Integer) row[16], (String) row[17], (Integer) row[18], (Integer) row[19], (String) row[20], (Integer) row[21], (Integer) row[22]))
 				.collect(Collectors.toList());
 
 	}

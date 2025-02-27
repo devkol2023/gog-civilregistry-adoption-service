@@ -32,5 +32,6 @@ public class VaultResponse {
 	private Integer isReleaseApplicable; 
 	private Integer isOnBehalf; 
 	private String parishOfBirth; 
+	private Integer isAdoptionCertificateApprove;
 	private Integer totalCount;
 }
