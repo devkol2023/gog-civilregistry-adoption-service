@@ -111,7 +111,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 
 	@Autowired
 	ApplicationRepositoryCustom applicationRepositoryCustom;
-	
+
 	@Autowired
 	ApplicationAdoptionCertificateDetailRepository applicationAdoptionCertRepository;
 
@@ -619,6 +619,9 @@ public class AdoptionServiceImpl implements AdoptionService {
 				motherInformation.setMotherDOB(formatter.format(applicationAR.getMotherDateOfBirth()));
 
 			generalInformation.setCurrentStageId(applicationRegisterEntity.getCurrentStatusId());
+			generalInformation.setApplicationNo(request.getApplicationNo());
+			generalInformation.setApplicationTypeId(applicationRegisterEntity.getApplicationTypeId());
+			
 
 			res.setFatherInformation(fatherInformation);
 			res.setChildInformation(childInformation);
@@ -1351,7 +1354,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 		logger.info("Exit Method: searchACDownload");
 		return response;
 	}
-	
+
 	@Override
 	public ServiceResponse submitAdoptionCertificate(MultipartFile[] files, String requeststr) {
 		// TODO Auto-generated method stub
@@ -1375,7 +1378,6 @@ public class AdoptionServiceImpl implements AdoptionService {
 			requeststr = requeststr.replaceAll("\\n", "").replaceAll("\\t", "");
 			request = mapper.readValue(requeststr, SaveAdoptionCertRequest.class);
 
-			
 			WorkflowInformation workflowInfoRequest = request.getWorkflowInformation();
 
 			applicationNumber = request.getAdoptionCertInformation().getApplicationNo();
@@ -1468,10 +1470,6 @@ public class AdoptionServiceImpl implements AdoptionService {
 				docEntityResponseList.add(citizenDocumentAttachment);
 			}
 
-			
-
-			
-
 			if (request.getAdoptionCertInformation().getApplicationAdoptionCertificateId() == null
 					|| request.getAdoptionCertInformation().getApplicationAdoptionCertificateId() == 0L) {
 
@@ -1489,14 +1487,14 @@ public class AdoptionServiceImpl implements AdoptionService {
 
 				savedApplicationEntity = applicationAdoptionCertRepository.save(applicationEntity);
 
-				request.getAdoptionCertInformation()
-						.setApplicationAdoptionCertificateId(savedApplicationEntity.getApplicationAdoptionCertificateId());
+				request.getAdoptionCertInformation().setApplicationAdoptionCertificateId(
+						savedApplicationEntity.getApplicationAdoptionCertificateId());
 				request.getAdoptionCertInformation().setApplicationNo(applicationNumber);
 				request.getAdoptionCertInformation().setApplicationRegisterId(applicationRegisterId);
 
 			} else {
 
-				 ApplicationAdoptionCertificateDetailEntity appCertEntity = applicationAdoptionCertRepository
+				ApplicationAdoptionCertificateDetailEntity appCertEntity = applicationAdoptionCertRepository
 						.findById(request.getAdoptionCertInformation().getApplicationAdoptionCertificateId())
 						.orElseThrow(() -> new IllegalArgumentException("Adoption Certificate Details not found"));
 
@@ -1512,7 +1510,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 				applicationEntity.setApplicationRegisterId(applicationRegisterId);
 				applicationEntity.setCreatedBy(createdBy);
 				applicationEntity.setCreatedOn(createdOn);
-				
+
 				savedApplicationEntity = applicationAdoptionCertRepository.save(applicationEntity);
 
 			}
@@ -1537,7 +1535,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 				}
 				documentRepository.updateFileIdIsActive(deletedFileIds);
 			}
-            
+
 			request.getAdoptionCertInformation().setApplicationRegisterId(applicationRegisterId);
 			responseObj.setAdoptionCertInformation(request.getAdoptionCertInformation());
 			responseObj.setUploadFileData(docEntityResponseList);
@@ -1556,7 +1554,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 		logger.info("Exit Method " + "submitAdoptionCertificate");
 		return response;
 	}
-	
+
 	@Override
 	public ServiceResponse getApplyBirthCertificateList(ApplyBirthCertificateRequest request) {
 		logger.info("Entry Method " + "getApplyBirthCertificateList");
@@ -1588,7 +1586,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 				responseObj.setDateOfBirth(dto.getDateOfBirth());
 				responseObj.setParishOfChild(dto.getParishOfChild());
 				responseObj.setIsAdoptionCertificateApprove(dto.getIsAdoptionCertificateApprove());
-				
+
 				responseList.add(responseObj);
 			}
 
