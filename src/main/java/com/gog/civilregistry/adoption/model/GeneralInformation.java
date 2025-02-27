@@ -13,7 +13,7 @@ public class GeneralInformation {
 	private Integer instituteParish;
 	private Long applicationRegisterId;
 	private String entryNo;
-	private Long nodEntryNo;
+	private String nodEntryNo;
 	private String marginalNote;
 	private String modeOfSignature;
 	private String remarks;

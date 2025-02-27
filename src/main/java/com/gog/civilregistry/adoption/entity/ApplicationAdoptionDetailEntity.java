@@ -204,7 +204,7 @@ public class ApplicationAdoptionDetailEntity extends BaseEntity {
 	private String motherSurname;
 
 	@Column(name = "nod_entry_no")
-	private Integer nodEntryNo;
+	private String nodEntryNo;
 
 	private Short page;
 
