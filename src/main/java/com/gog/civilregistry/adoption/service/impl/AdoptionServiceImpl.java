@@ -32,6 +32,7 @@ import com.gog.civilregistry.adoption.model.ACDownloadResponseDTO;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatusResponse;
 import com.gog.civilregistry.adoption.model.ApplyBirthCertificateRequest;
+import com.gog.civilregistry.adoption.model.ApprovedAdoptionRegistrationDetails;
 import com.gog.civilregistry.adoption.model.BirthCertificateApplicationResponseProjection;
 import com.gog.civilregistry.adoption.model.BirthCertificateApplyListResponse;
 import com.gog.civilregistry.adoption.model.ChildAdoptionDetailsProjection;
@@ -1242,6 +1243,16 @@ public class AdoptionServiceImpl implements AdoptionService {
 			workflowUpdateModel.setIsDraft(request.getIsDraft());
 
 			Map<String, Object> resultMap = adoptionRepositoryCustom.updateWorkflowDetails(workflowUpdateModel);
+			
+			if (workflowUpdateModel.getNextStatusId() != null
+					&& workflowUpdateModel.getNextStatusId() == Integer.valueOf(CommonConstants.APP_APPROVED_STATUS)) {
+				if (request.getGeneralInformation().getApplicationTypeCode() != null && request.getGeneralInformation()
+						.getApplicationTypeCode().equalsIgnoreCase(CommonConstants.ADOPTION_REGISTRATION)) {
+					
+					List<ApprovedAdoptionRegistrationDetails> approveAdoptionRegistration = adoptionRepositoryCustom.approveAdoptionRegistration(workflowUpdateModel);
+					response.setResponseObject(approveAdoptionRegistration);
+				}
+			}
 
 			SaveARDraftResponse responseObj = new SaveARDraftResponse();
 
