@@ -23,5 +23,6 @@ public class AdoptionCertInformation {
 	private Integer currentStageId;
 	private String applicationTypeCode;
 	private Integer applicationTypeId;
+	private String paymentReceiptNumber;
 
 }

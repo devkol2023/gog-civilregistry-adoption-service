@@ -53,11 +53,20 @@ public class ApplicationAdoptionCertificateDetailEntity extends BaseEntity {
 
 	@Column(name="total_amount")
 	private float totalAmount;
+	
+	@Column(name="payment_receipt_number")
+	private String paymentReceiptNumber;
 
 	public ApplicationAdoptionCertificateDetailEntity() {
 	}
 
-	
+	public String getPaymentReceiptNumber() {
+		return paymentReceiptNumber;
+	}
+
+	public void setPaymentReceiptNumber(String paymentReceiptNumber) {
+		this.paymentReceiptNumber = paymentReceiptNumber;
+	}
 	
 	public Long getApplicationAdoptionCertificateId() {
 		return this.applicationAdoptionCertificateId;
