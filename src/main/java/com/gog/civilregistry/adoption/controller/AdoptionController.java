@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.gog.civilregistry.adoption.model.ACDownloadRequest;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
+import com.gog.civilregistry.adoption.model.ApplyBirthCertificateRequest;
 import com.gog.civilregistry.adoption.model.ChildInformation;
 import com.gog.civilregistry.adoption.model.ClaimApplicationWfRequest;
 import com.gog.civilregistry.adoption.model.DocListRequest;
@@ -176,6 +177,11 @@ public class AdoptionController {
 			response.setMessage(CommonConstants.ERROR_MSG);
 		}
 		return response;
+	}
+	
+	@PostMapping("/getApplyBirthCertificateList")
+	public ServiceResponse getApplyBirthCertificateList(@RequestBody ApplyBirthCertificateRequest request) {
+		return adoptionService.getApplyBirthCertificateList(request);
 	}
 
 }

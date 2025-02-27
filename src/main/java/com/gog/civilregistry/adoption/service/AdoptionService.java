@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.gog.civilregistry.adoption.model.ACDownloadRequest;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
+import com.gog.civilregistry.adoption.model.ApplyBirthCertificateRequest;
 import com.gog.civilregistry.adoption.model.ChildInformation;
 import com.gog.civilregistry.adoption.model.DocListRequest;
 import com.gog.civilregistry.adoption.model.GeneralInformation;
@@ -36,6 +37,8 @@ public interface AdoptionService {
 	ServiceResponse trackAppUser(TrackAppUserRequest request);
 
 	ServiceResponse getVault(VaultRequest request);
+	
+	ServiceResponse getApplyBirthCertificateList(ApplyBirthCertificateRequest request);
 
 	ServiceResponse saveAndSubmitByDepartmentUsers(MultipartFile[] attachments, String request);
 

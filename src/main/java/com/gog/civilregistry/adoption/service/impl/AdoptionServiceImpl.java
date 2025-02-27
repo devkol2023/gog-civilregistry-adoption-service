@@ -31,6 +31,9 @@ import com.gog.civilregistry.adoption.model.ACDownloadResponse;
 import com.gog.civilregistry.adoption.model.ACDownloadResponseDTO;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatusResponse;
+import com.gog.civilregistry.adoption.model.ApplyBirthCertificateRequest;
+import com.gog.civilregistry.adoption.model.BirthCertificateApplicationResponseProjection;
+import com.gog.civilregistry.adoption.model.BirthCertificateApplyListResponse;
 import com.gog.civilregistry.adoption.model.ChildAdoptionDetailsProjection;
 import com.gog.civilregistry.adoption.model.ChildInformation;
 import com.gog.civilregistry.adoption.model.DeletedFileListModel;
@@ -1551,6 +1554,61 @@ public class AdoptionServiceImpl implements AdoptionService {
 			throw new RuntimeException("Error during submitting Adoption , rolling back transaction", e);
 		}
 		logger.info("Exit Method " + "submitAdoptionCertificate");
+		return response;
+	}
+	
+	@Override
+	public ServiceResponse getApplyBirthCertificateList(ApplyBirthCertificateRequest request) {
+		logger.info("Entry Method " + "getApplyBirthCertificateList");
+		ServiceResponse response = new ServiceResponse();
+		try {
+
+			List<BirthCertificateApplicationResponseProjection> dtoList = applicationRegisterRepository
+					.getListForBirthCertificateApply(request.getCitizenId());
+
+			if (dtoList == null || dtoList.isEmpty()) {
+				logger.warn("No records found for the given input: {}", request);
+				response.setStatus(CommonConstants.SUCCESS_STATUS);
+				response.setMessage("No records found.");
+				response.setResponseObject(Collections.emptyList());
+				return response;
+			}
+
+			List<BirthCertificateApplyListResponse> responseList = new ArrayList<>();
+			for (BirthCertificateApplicationResponseProjection dto : dtoList) {
+				BirthCertificateApplyListResponse responseObj = new BirthCertificateApplyListResponse();
+				responseObj.setApplicationRegisterId(dto.getApplicationRegisterId());
+				responseObj.setApplicationNo(dto.getApplicationNo());
+				responseObj.setAdoptionRegistrationNumber(dto.getAdoptionRegistrationNumber());
+				responseObj.setChildCitizenId(dto.getChildCitizenId());
+				responseObj.setChildCivilRegistryNumber(dto.getChildCivilRegistryNumber());
+				responseObj.setChildName(dto.getChildName());
+				responseObj.setMotherName(dto.getMotherName());
+				responseObj.setFatherName(dto.getFatherName());
+				responseObj.setDateOfBirth(dto.getDateOfBirth());
+				responseObj.setParishOfChild(dto.getParishOfChild());
+				responseObj.setIsAdoptionCertificateApprove(dto.getIsAdoptionCertificateApprove());
+				
+				responseList.add(responseObj);
+			}
+
+			if (responseList.isEmpty()) {
+				response.setStatus(CommonConstants.SUCCESS_STATUS);
+				response.setMessage("No records found for this.");
+				response.setResponseObject(Collections.emptyList());
+			} else {
+				response.setStatus(CommonConstants.SUCCESS_STATUS);
+				response.setMessage(CommonConstants.SUCCESS);
+				response.setResponseObject(responseList);
+			}
+
+		} catch (Exception e) {
+			logger.error("Error occurred in getApplyBirthCertificateList: {}", e.getMessage(), e);
+			response.setStatus(CommonConstants.ERROR_STATUS);
+			response.setMessage("An error occurred while processing the request.");
+		}
+
+		logger.info("Exit Method: getApplyBirthCertificateList");
 		return response;
 	}
 
