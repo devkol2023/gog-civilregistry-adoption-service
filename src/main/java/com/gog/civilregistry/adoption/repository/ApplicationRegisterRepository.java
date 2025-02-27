@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import com.gog.civilregistry.adoption.dto.GetCivilRegistryNumberDTO;
 import com.gog.civilregistry.adoption.entity.ApplicationRegisterEntity;
 import com.gog.civilregistry.adoption.model.ACDownloadResponseDTO;
+import com.gog.civilregistry.adoption.model.BirthCertificateApplicationResponseProjection;
 
 @Repository
 public interface ApplicationRegisterRepository extends JpaRepository<ApplicationRegisterEntity, Long> {
@@ -56,5 +57,54 @@ public interface ApplicationRegisterRepository extends JpaRepository<Application
 			@Param("parishId") Integer parishId, @Param("genderId") Integer genderId);
 
 	ApplicationRegisterEntity findByApplicationRegisterId(Long applicationRegisterId);
+	
+	@Query(value = " SELECT \r\n"
+			+ "		        tar.application_register_id AS applicationRegisterId,\r\n"
+			+ "		        tar.application_no AS applicationNo,\r\n"
+			+ "		        tbr.adoption_registration_number AS adoptionRegistrationNumber,\r\n"
+			+ "		        tmc.citizen_id AS childCitizenId,\r\n"
+			+ "		        tmc.civil_registry_number AS childCivilRegistryNumber,\r\n"
+			+ "		        masters.fn_get_full_name(tand.child_first_name, tand.child_middle_name, tand.child_surname) AS childName,\r\n"
+			+ "		        masters.fn_get_full_name(tand.mother_first_name, tand.mother_middle_name, tand.mother_surname) AS motherName,\r\n"
+			+ "		        masters.fn_get_full_name(tand.father_first_name, tand.father_middle_name, tand.father_surname) AS fatherName,\r\n"
+			+ "		        TO_CHAR(CAST(tand.child_date_of_birth AS DATE), 'DD/MM/YYYY') AS dateOfBirth,\r\n"
+			+ "		        mg.geography_name AS parishOfChild,\r\n"
+			+ "		        0 AS isAdoptionCertificateApprove \r\n"
+			+ "		    FROM \r\n"
+			+ "		        adoption.t_adoption_register tbr\r\n"
+			+ "		    INNER JOIN \r\n"
+			+ "		        adoption.t_application_adoption_details tand \r\n"
+			+ "		        ON tbr.application_adoption_id = tand.application_adoption_id\r\n"
+			+ "		    INNER JOIN \r\n"
+			+ "		        applications.t_application_register tar \r\n"
+			+ "		        ON tar.application_register_id = tand.application_register_id\r\n"
+			+ "		    LEFT JOIN \r\n"
+			+ "		        citizen.t_manage_citizen tmc \r\n"
+			+ "		        ON tmc.citizen_id = tand.child_citizen_id\r\n"
+			+ "		    LEFT JOIN \r\n"
+			+ "		        masters.m_geography mg \r\n"
+			+ "		        ON mg.geography_id = tand.child_parish\r\n"
+			+ "		    LEFT JOIN \r\n"
+			+ "		        citizen.t_citizen_register tcr \r\n"
+			+ "		        ON tcr.citizen_id = tmc.citizen_id\r\n"
+			+ "		    WHERE \r\n"
+			+ "		        (tand.father_citizen_id = :pCitizenId OR tand.mother_citizen_id = :pCitizenId)\r\n"
+			+ "		        AND tbr.citizen_id NOT IN (\r\n"
+			+ "		            SELECT tcam.citizen_id\r\n"
+			+ "		            FROM applications.t_application_register tar\r\n"
+			+ "		            INNER JOIN citizen.t_citizen_application_map tcam \r\n"
+			+ "		                ON tar.application_register_id = tcam.application_register_id\r\n"
+			+ "		            WHERE tar.current_status_id <> 13 \r\n"
+			+ "		                AND tcam.citizen_id IN (\r\n"
+			+ "		                    SELECT tand.child_citizen_id \r\n"
+			+ "		                    FROM adoption.t_application_adoption_details tand\r\n"
+			+ "		                    WHERE tand.father_citizen_id = :pCitizenId OR tand.mother_citizen_id = :pCitizenId\r\n"
+			+ "		                )\r\n"
+			+ "		        )", nativeQuery = true)
+		List<BirthCertificateApplicationResponseProjection> getListForBirthCertificateApply(
+		        @Param("pCitizenId") Integer pCitizenId
+		);
+
+	
 
 }
