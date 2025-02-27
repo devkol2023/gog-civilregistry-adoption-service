@@ -163,5 +163,19 @@ public class AdoptionController {
 	public ServiceResponse searchACDownload(@RequestBody ACDownloadRequest request) {
 		return adoptionService.searchACDownload(request);
 	}
+	
+	@PostMapping("/submitAdoptionCertificate")
+	public ServiceResponse submitAdoptionCertificate(
+			@RequestParam(value = "attachments", required = false) MultipartFile[] attachments, String request) {
+		// SaveNODDraftRequest
+		ServiceResponse response = new ServiceResponse();
+		try {
+			response = adoptionService.submitAdoptionCertificate(attachments, request);
+		} catch (Exception e) {
+			response.setStatus(CommonConstants.ERROR_STATUS);
+			response.setMessage(CommonConstants.ERROR_MSG);
+		}
+		return response;
+	}
 
 }

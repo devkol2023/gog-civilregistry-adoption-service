@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gog.civilregistry.adoption.dto.GetCivilRegistryNumberDTO;
 import com.gog.civilregistry.adoption.entity.AdoptionApplicationDocumentEntity;
+import com.gog.civilregistry.adoption.entity.ApplicationAdoptionCertificateDetailEntity;
 import com.gog.civilregistry.adoption.entity.ApplicationAdoptionDetailEntity;
 import com.gog.civilregistry.adoption.entity.ApplicationRegisterEntity;
 import com.gog.civilregistry.adoption.model.ACDownloadRequest;
@@ -43,6 +44,8 @@ import com.gog.civilregistry.adoption.model.NewFileUploadResponse;
 import com.gog.civilregistry.adoption.model.ProcessApplicationModel;
 import com.gog.civilregistry.adoption.model.SaveARDraftRequest;
 import com.gog.civilregistry.adoption.model.SaveARDraftResponse;
+import com.gog.civilregistry.adoption.model.SaveAdoptionCertRequest;
+import com.gog.civilregistry.adoption.model.SaveAdoptionCertResponse;
 import com.gog.civilregistry.adoption.model.SearchApplicationACDto;
 import com.gog.civilregistry.adoption.model.SearchApplicationACRequest;
 import com.gog.civilregistry.adoption.model.SearchApplicationACResponse;
@@ -59,6 +62,7 @@ import com.gog.civilregistry.adoption.model.WorkflowInformation;
 import com.gog.civilregistry.adoption.model.WorkflowUpdateModel;
 import com.gog.civilregistry.adoption.model.common.ServiceResponse;
 import com.gog.civilregistry.adoption.repository.AdoptionApplicationDocumentRepository;
+import com.gog.civilregistry.adoption.repository.ApplicationAdoptionCertificateDetailRepository;
 import com.gog.civilregistry.adoption.repository.ApplicationAdoptionDetailRepository;
 import com.gog.civilregistry.adoption.repository.ApplicationRegisterRepository;
 import com.gog.civilregistry.adoption.repository.custom.AdoptionRepositoryCustom;
@@ -104,6 +108,9 @@ public class AdoptionServiceImpl implements AdoptionService {
 
 	@Autowired
 	ApplicationRepositoryCustom applicationRepositoryCustom;
+	
+	@Autowired
+	ApplicationAdoptionCertificateDetailRepository applicationAdoptionCertRepository;
 
 	@Override
 	public ServiceResponse trackApplicationStatus(ApplicationTrackStatus request) {
@@ -1339,6 +1346,211 @@ public class AdoptionServiceImpl implements AdoptionService {
 		}
 
 		logger.info("Exit Method: searchACDownload");
+		return response;
+	}
+	
+	@Override
+	public ServiceResponse submitAdoptionCertificate(MultipartFile[] files, String requeststr) {
+		// TODO Auto-generated method stub
+		logger.info("Entry Method " + "submitAdoptionCertificate");
+		ServiceResponse response = new ServiceResponse();
+		SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+		SaveAdoptionCertResponse responseObj = new SaveAdoptionCertResponse();
+		List<UploadFileData> docEntityResponseList = new ArrayList<UploadFileData>();
+		ApplicationAdoptionCertificateDetailEntity applicationEntity = new ApplicationAdoptionCertificateDetailEntity();
+		ApplicationAdoptionCertificateDetailEntity savedApplicationEntity = new ApplicationAdoptionCertificateDetailEntity();
+		Long applicationRegisterId = null;
+		String applicationNumber = null;
+		TownProjection fatherTown = null;
+		TownProjection motherTown = null;
+
+		try {
+			// generating model request from string request
+
+			ObjectMapper mapper = new ObjectMapper();
+			SaveAdoptionCertRequest request = null;
+			requeststr = requeststr.replaceAll("\\n", "").replaceAll("\\t", "");
+			request = mapper.readValue(requeststr, SaveAdoptionCertRequest.class);
+
+			
+			WorkflowInformation workflowInfoRequest = request.getWorkflowInformation();
+
+			applicationNumber = request.getAdoptionCertInformation().getApplicationNo();
+			applicationRegisterId = request.getAdoptionCertInformation().getApplicationRegisterId();
+
+			if (request.getAdoptionCertInformation().getApplicationNo() == null) {
+
+				ProcessApplicationModel processNod = new ProcessApplicationModel();
+				processNod.setUserId(request.getLoginUserId());
+				processNod.setApplicationTypeId(request.getAdoptionCertInformation().getApplicationTypeId());
+				processNod.setParishId(request.getAdoptionCertInformation().getMotherParish());
+				processNod.setStatusId(workflowInfoRequest.getNextStatusId());
+				processNod.setCitizenId(null);
+				// processNod.setApplicationRegisterId(applicationRegisterEntity.getApplicationRegisterId());
+
+				Map<String, Object> resultMap = adoptionRepositoryCustom.createNewApplication(processNod);
+
+				applicationNumber = (String) resultMap.get("applicationNumber");
+				applicationRegisterId = (Long) resultMap.get("applicationRegisterId");
+				// entry no from Sanjay- set in entity before save
+
+				if (applicationNumber == null || applicationNumber.equals("")) {
+					throw new RuntimeException("Unable to crate Application Number");
+				}
+
+			}
+
+			// uploading uploaded documents to alfresco
+
+			// Start: Commented by Sayan
+
+			if (files != null) {
+				if (files.length > 0) {
+					// only upload those files whole id = 0 or null
+					int length = files.length;
+					for (int j = 0; j < length; j++) {
+						if (request.getUploadFileData().get(j).getApplicationDocId() == 0L
+								|| request.getUploadFileData().get(j).getApplicationDocId() == null) {
+							MultipartFile[] fileToUpload = new MultipartFile[1];
+							fileToUpload[0] = files[j];
+							NewFileUploadResponse fileUploadResponse = dmsService.uploadFileToAlfresco(fileToUpload);
+							if (request.getUploadFileData() != null && fileUploadResponse != null
+									&& !fileUploadResponse.getFileUploadResponse().isEmpty()) {
+								int i = 0;
+//							for (UploadFileData citizenDocumentAttachment : request.getUploadFileData()) {
+//								citizenDocumentAttachment
+//										.setReferenceId(fileUploadResponse.getFileUploadResponse().get(i));
+//								citizenDocumentAttachment.setFileName(files[i].getOriginalFilename());
+//								i++;
+//							}
+								// set attributes of uploaded file in alfresco in request
+
+								request.getUploadFileData().get(j)
+										.setReferenceId(fileUploadResponse.getFileUploadResponse().get(0));
+								request.getUploadFileData().get(j)
+										.setApplicationDocDmsId(fileUploadResponse.getFileUploadResponse().get(0));
+								request.getUploadFileData().get(j).setFileName(files[j].getOriginalFilename());
+							}
+						}
+					}
+				}
+			}
+
+			// save application documents in t_application_documents table
+
+			for (UploadFileData citizenDocumentAttachment : request.getUploadFileData()) {
+				// save only if file id is null or 0
+				AdoptionApplicationDocumentEntity docEntity = new AdoptionApplicationDocumentEntity();
+				docEntity.setApplicationDocDmsId(citizenDocumentAttachment.getReferenceId());
+				docEntity.setApplicationDocName(citizenDocumentAttachment.getFileName());
+				docEntity.setApplicationRegisterId(applicationRegisterId);
+				docEntity.setDocumentTypeId(citizenDocumentAttachment.getDocTypeId());
+				docEntity.setApplicationDocSubject(citizenDocumentAttachment.getFileSubject());
+				docEntity.setCreatedBy(request.getLoginUserId());
+				docEntity.setUpdatedBy(request.getLoginUserId());
+				docEntity.setUpdatedOn(LocalDateTime.now());
+				docEntity.setCreatedOn(LocalDateTime.now());
+				docEntity.setIsActive(true);
+				docEntity.setDocumentTypeCode(citizenDocumentAttachment.getDocTypeCode());
+				// save or update based on applicationDocId
+				if (citizenDocumentAttachment.getApplicationDocId() != 0L
+						|| citizenDocumentAttachment.getApplicationDocId() != null) {
+					docEntity.setApplicationDocId(citizenDocumentAttachment.getApplicationDocId());
+				}
+				docEntity = documentRepository.save(docEntity);
+				// setting details in uploadFileData
+				citizenDocumentAttachment.setApplicationRegisterId(applicationRegisterId);
+				citizenDocumentAttachment.setApplicationDocDmsId(citizenDocumentAttachment.getReferenceId());
+				citizenDocumentAttachment.setApplicationDocId(docEntity.getApplicationDocId());
+				docEntityResponseList.add(citizenDocumentAttachment);
+			}
+
+			
+
+			
+
+			if (request.getAdoptionCertInformation().getApplicationAdoptionCertificateId() == null
+					|| request.getAdoptionCertInformation().getApplicationAdoptionCertificateId() == 0L) {
+
+				Date deliveryDate = null;
+
+				applicationEntity = modelMapper.map(request.getAdoptionCertInformation(),
+						ApplicationAdoptionCertificateDetailEntity.class);
+
+				applicationEntity.setCreatedBy(request.getLoginUserId());
+				applicationEntity.setUpdatedBy(request.getLoginUserId());
+				applicationEntity.setIsActive(true);
+				// set default status
+
+				applicationEntity.setApplicationRegisterId(applicationRegisterId);
+
+				savedApplicationEntity = applicationAdoptionCertRepository.save(applicationEntity);
+
+				request.getAdoptionCertInformation()
+						.setApplicationAdoptionCertificateId(savedApplicationEntity.getApplicationAdoptionCertificateId());
+				request.getAdoptionCertInformation().setApplicationNo(applicationNumber);
+				request.getAdoptionCertInformation().setApplicationRegisterId(applicationRegisterId);
+
+			} else {
+
+				 ApplicationAdoptionCertificateDetailEntity appCertEntity = applicationAdoptionCertRepository
+						.findById(request.getAdoptionCertInformation().getApplicationAdoptionCertificateId())
+						.orElseThrow(() -> new IllegalArgumentException("Adoption Certificate Details not found"));
+
+				Integer createdBy = appCertEntity.getCreatedBy();
+				LocalDateTime createdOn = appCertEntity.getCreatedOn();
+
+				applicationEntity = modelMapper.map(request.getAdoptionCertInformation(),
+						ApplicationAdoptionCertificateDetailEntity.class);
+
+				applicationEntity.setUpdatedBy(request.getLoginUserId());
+				applicationEntity.setUpdatedOn(LocalDateTime.now());
+				applicationEntity.setIsActive(true);
+				applicationEntity.setApplicationRegisterId(applicationRegisterId);
+				applicationEntity.setCreatedBy(createdBy);
+				applicationEntity.setCreatedOn(createdOn);
+				
+				savedApplicationEntity = applicationAdoptionCertRepository.save(applicationEntity);
+
+			}
+
+			WorkflowUpdateModel workflowUpdateModel = new WorkflowUpdateModel();
+			modelMapper.map(workflowInfoRequest, workflowUpdateModel);
+			workflowUpdateModel.setApplicationRegisterId(applicationRegisterId);
+			workflowUpdateModel.setApplicationTypeId(request.getAdoptionCertInformation().getApplicationTypeId());
+			workflowUpdateModel.setIsDraft(0);
+
+			Map<String, Object> resultMap = adoptionRepositoryCustom.updateWorkflowDetails(workflowUpdateModel);
+
+			// End: Added by Sayan
+
+			// setting all values in response
+
+			// update files
+			if (request.getDeletedFiles() != null) {
+				List<Integer> deletedFileIds = new ArrayList<Integer>();
+				for (DeletedFileListModel item : request.getDeletedFiles()) {
+					deletedFileIds.add(item.getFileId());
+				}
+				documentRepository.updateFileIdIsActive(deletedFileIds);
+			}
+            
+			request.getAdoptionCertInformation().setApplicationRegisterId(applicationRegisterId);
+			responseObj.setAdoptionCertInformation(request.getAdoptionCertInformation());
+			responseObj.setUploadFileData(docEntityResponseList);
+			responseObj.setLoginUserId(request.getLoginUserId());
+
+			response.setStatus(CommonConstants.SUCCESS_STATUS);
+			response.setMessage(CommonConstants.SUCCESS_MSG);
+			response.setResponseObject(responseObj);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.setStatus(CommonConstants.ERROR_STATUS);
+			response.setMessage(CommonConstants.ERROR);
+			throw new RuntimeException("Error during submitting Adoption , rolling back transaction", e);
+		}
+		logger.info("Exit Method " + "submitAdoptionCertificate");
 		return response;
 	}
 

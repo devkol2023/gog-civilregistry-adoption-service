@@ -4,6 +4,8 @@ import java.io.Serializable;
 import jakarta.persistence.*;
 import java.sql.Timestamp;
 
+import com.gog.civilregistry.adoption.entity.BaseEntity;
+
 
 /**
  * The persistent class for the t_application_adoption_certificate_details database table.
@@ -12,7 +14,7 @@ import java.sql.Timestamp;
 @Entity
 @Table(name="t_application_adoption_certificate_details", schema = "adoption")
 @NamedQuery(name="ApplicationAdoptionCertificateDetailEntity.findAll", query="SELECT t FROM ApplicationAdoptionCertificateDetailEntity t")
-public class ApplicationAdoptionCertificateDetailEntity implements Serializable {
+public class ApplicationAdoptionCertificateDetailEntity extends BaseEntity {
 	private static final long serialVersionUID = 1L;
 
 	@Id
@@ -35,17 +37,8 @@ public class ApplicationAdoptionCertificateDetailEntity implements Serializable 
 	@Column(name="application_register_id")
 	private Long applicationRegisterId;
 
-	@Column(name="created_by")
-	private Integer createdBy;
-
-	@Column(name="created_on")
-	private Timestamp createdOn;
-
 	@Column(name="fees_per_copy")
 	private float feesPerCopy;
-
-	@Column(name="is_active")
-	private Boolean isActive;
 
 	@Column(name="no_of_copies")
 	private Short noOfCopies;
@@ -60,12 +53,6 @@ public class ApplicationAdoptionCertificateDetailEntity implements Serializable 
 
 	@Column(name="total_amount")
 	private float totalAmount;
-
-	@Column(name="updated_by")
-	private Integer updatedBy;
-
-	@Column(name="updated_on")
-	private Timestamp updatedOn;
 
 	public ApplicationAdoptionCertificateDetailEntity() {
 	}
@@ -120,21 +107,7 @@ public class ApplicationAdoptionCertificateDetailEntity implements Serializable 
 		this.applicationRegisterId = applicationRegisterId;
 	}
 
-	public Integer getCreatedBy() {
-		return this.createdBy;
-	}
-
-	public void setCreatedBy(Integer createdBy) {
-		this.createdBy = createdBy;
-	}
-
-	public Timestamp getCreatedOn() {
-		return this.createdOn;
-	}
-
-	public void setCreatedOn(Timestamp createdOn) {
-		this.createdOn = createdOn;
-	}
+	
 
 	public float getFeesPerCopy() {
 		return this.feesPerCopy;
@@ -144,13 +117,7 @@ public class ApplicationAdoptionCertificateDetailEntity implements Serializable 
 		this.feesPerCopy = feesPerCopy;
 	}
 
-	public Boolean getIsActive() {
-		return this.isActive;
-	}
-
-	public void setIsActive(Boolean isActive) {
-		this.isActive = isActive;
-	}
+	
 
 	public Short getNoOfCopies() {
 		return this.noOfCopies;
@@ -192,20 +159,6 @@ public class ApplicationAdoptionCertificateDetailEntity implements Serializable 
 		this.totalAmount = totalAmount;
 	}
 
-	public Integer getUpdatedBy() {
-		return this.updatedBy;
-	}
-
-	public void setUpdatedBy(Integer updatedBy) {
-		this.updatedBy = updatedBy;
-	}
-
-	public Timestamp getUpdatedOn() {
-		return this.updatedOn;
-	}
-
-	public void setUpdatedOn(Timestamp updatedOn) {
-		this.updatedOn = updatedOn;
-	}
+	
 
 }

@@ -40,5 +40,7 @@ public interface AdoptionService {
 	ServiceResponse saveAndSubmitByDepartmentUsers(MultipartFile[] attachments, String request);
 
 	ServiceResponse getChildDetailsForAdoption(ChildInformation request);
+	
+	ServiceResponse submitAdoptionCertificate(MultipartFile[] attachments, String request);
 
 }
