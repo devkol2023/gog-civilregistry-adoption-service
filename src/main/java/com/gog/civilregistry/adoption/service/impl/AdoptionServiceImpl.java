@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -29,6 +30,7 @@ import com.gog.civilregistry.adoption.entity.ApplicationRegisterEntity;
 import com.gog.civilregistry.adoption.model.ACDownloadRequest;
 import com.gog.civilregistry.adoption.model.ACDownloadResponse;
 import com.gog.civilregistry.adoption.model.ACDownloadResponseDTO;
+import com.gog.civilregistry.adoption.model.AdoptionCertInformation;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatusResponse;
 import com.gog.civilregistry.adoption.model.ApplyBirthCertificateRequest;
@@ -62,6 +64,8 @@ import com.gog.civilregistry.adoption.model.TrackAppUserDto;
 import com.gog.civilregistry.adoption.model.TrackAppUserRequest;
 import com.gog.civilregistry.adoption.model.TrackAppUserResponse;
 import com.gog.civilregistry.adoption.model.UploadFileData;
+import com.gog.civilregistry.adoption.model.VaultRequest;
+import com.gog.civilregistry.adoption.model.VaultResponse;
 import com.gog.civilregistry.adoption.model.WorkflowInformation;
 import com.gog.civilregistry.adoption.model.WorkflowUpdateModel;
 import com.gog.civilregistry.adoption.model.common.ServiceResponse;
@@ -75,8 +79,6 @@ import com.gog.civilregistry.adoption.service.AdoptionService;
 import com.gog.civilregistry.adoption.service.DMSService;
 import com.gog.civilregistry.adoption.service.IntegrationApiService;
 import com.gog.civilregistry.adoption.util.CommonConstants;
-import com.gog.civilregistry.adoption.model.VaultRequest;
-import com.gog.civilregistry.adoption.model.VaultResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -1625,6 +1627,82 @@ public class AdoptionServiceImpl implements AdoptionService {
 		}
 
 		logger.info("Exit Method: getApplyBirthCertificateList");
+		return response;
+	}
+
+	@Override
+	public ServiceResponse getAdoptionCertificateDetails(GeneralInformation request) {
+		logger.info("Entry Method " + " getAdoptionCertificateDetails");
+		ServiceResponse response = new ServiceResponse();
+		ServiceResponse respadoptionRegistration = new ServiceResponse();
+
+		List<UploadFileData> fileDataList = new ArrayList<UploadFileData>();
+		SaveAdoptionCertResponse res = new SaveAdoptionCertResponse();
+		ApplicationRegisterEntity applicationRegisterEntity = new ApplicationRegisterEntity();
+		ApplicationAdoptionCertificateDetailEntity application = new ApplicationAdoptionCertificateDetailEntity();
+		AdoptionCertInformation adoptionCertInformation = new AdoptionCertInformation();
+
+		SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+		SaveARDraftResponse resp = new SaveARDraftResponse();
+//		String formattedDate = formatter.format(currentDate);
+
+		try {
+			applicationRegisterEntity = applicationRegisterRepository
+					.findByApplicationRegisterId(request.getApplicationRegisterId());
+			application = applicationAdoptionCertRepository
+					.findByApplicationRegisterId(applicationRegisterEntity.getApplicationRegisterId());
+			List<AdoptionApplicationDocumentEntity> docEntityList = documentRepository
+					.findByApplicationRegisterIdAndIsActive(applicationRegisterEntity.getApplicationRegisterId(), true);
+			// process document entity list to model - upload file data
+			for (AdoptionApplicationDocumentEntity docEntity : docEntityList) {
+				UploadFileData fileData = new UploadFileData();
+				fileData.setFileName(docEntity.getApplicationDocName());
+				fileData.setApplicationRegisterId(docEntity.getApplicationRegisterId());
+				fileData.setApplicationDocDmsId(docEntity.getApplicationDocDmsId());
+				fileData.setApplicationDocId(docEntity.getApplicationDocId());
+				fileData.setFileSubject(docEntity.getApplicationDocSubject());
+				fileData.setDocTypeId(docEntity.getDocumentTypeId());
+				fileData.setReferenceId(docEntity.getApplicationDocDmsId());
+				fileData.setDocTypeCode(docEntity.getDocumentTypeCode());
+				fileDataList.add(fileData);
+			}
+
+			adoptionCertInformation = modelMapper.map(application, AdoptionCertInformation.class);
+
+//			InstituteProjection proj = birthRegisterRepository.findInstituteById(generalInformation.getInstituteId());
+//			generalInformation.setInstituteName(proj.getInstituteName());
+
+			res.setAdoptionCertInformation(adoptionCertInformation);
+			res.setUploadFileData(fileDataList);
+
+			// fetch adoption registration details from adoption certificate
+			Long adoptionRegistrationId = application.getApplicationAdoptionId();
+			Optional<ApplicationAdoptionDetailEntity> adoptionRegistrationOptentity = adoptionDetailRepository
+					.findById(adoptionRegistrationId);
+
+			if (adoptionRegistrationOptentity.isPresent()) {
+
+				GeneralInformation req = new GeneralInformation();
+				req.setApplicationRegisterId(adoptionRegistrationOptentity.get().getApplicationRegisterId());
+
+				respadoptionRegistration = getAR(req);
+
+			}
+
+			// set marriage ;license details in marriage registration
+			res.getAdoptionCertInformation().setApplicationNo(request.getApplicationNo());
+			res.setAdoptionRegistrationInformation(respadoptionRegistration.getResponseObject());
+
+			response.setStatus(CommonConstants.SUCCESS_STATUS);
+			response.setMessage(CommonConstants.SUCCESS_MSG);
+			response.setResponseObject(res);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.setStatus(CommonConstants.ERROR_STATUS);
+			response.setMessage("An error occurred while processing the request.");
+		}
+		logger.info("Exit Method " + " getAdoptionCertificateDetails");
 		return response;
 	}
 
