@@ -21,7 +21,7 @@ public interface ApplicationRegisterRepository extends JpaRepository<Application
 	ApplicationRegisterEntity findByApplicationNo(String applicationNo);
 
 	@Query(value = "SELECT tmc.citizen_id, tmc.first_name as firstName , tmc.civil_registry_number as civilRegistryNumber "
-			+ "FROM citizen.t_manage_citizen tmc " + "WHERE tmc.citizen_id IN (:citizenIds)", nativeQuery = true)
+			+ "FROM citizen.t_manage_citizen tmc " + "WHERE tmc.citizen_id in (:citizenIds)", nativeQuery = true)
 	List<GetCivilRegistryNumberDTO> getCivilRegNoFromCitizenId(@Param("citizenIds") List<Integer> citizenIds);
 
 	@Query(value = """

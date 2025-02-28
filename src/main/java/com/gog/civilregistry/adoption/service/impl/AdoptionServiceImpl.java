@@ -575,11 +575,18 @@ public class AdoptionServiceImpl implements AdoptionService {
 
 			childInformation = modelMapper.map(applicationAR, ChildInformation.class);
 
-			List<Integer> citizenIds = Arrays.asList(fatherInformation.getFatherCitizenId(),
-					motherInformation.getMotherCitizenId(), childInformation.getChildCitizenId(),
-					childInformation.getFatherCitizenIdOld(), childInformation.getMotherCitizenIdOld()
+			List<Integer> citizenIds = Arrays.asList(
+					fatherInformation.getFatherCitizenId() != null ? fatherInformation.getFatherCitizenId() : 0,
+					motherInformation.getMotherCitizenId() != null ? motherInformation.getMotherCitizenId() : 0,
+					childInformation.getChildCitizenId() != null ? childInformation.getChildCitizenId() : 0,
+					childInformation.getFatherCitizenIdOld() != null ? childInformation.getFatherCitizenIdOld() : 0,
+					childInformation.getMotherCitizenIdOld() != null ? childInformation.getMotherCitizenIdOld() : 0
 
 			);
+
+//			List<Integer> citizenIds = Arrays.asList(1,2,3,4,5
+//
+//			);
 
 			List<GetCivilRegistryNumberDTO> civilRegNoDetailsList = applicationRegisterRepository
 					.getCivilRegNoFromCitizenId(citizenIds);
@@ -622,7 +629,6 @@ public class AdoptionServiceImpl implements AdoptionService {
 			generalInformation.setCurrentStageId(applicationRegisterEntity.getCurrentStatusId());
 			generalInformation.setApplicationNo(request.getApplicationNo());
 			generalInformation.setApplicationTypeId(applicationRegisterEntity.getApplicationTypeId());
-			
 
 			res.setFatherInformation(fatherInformation);
 			res.setChildInformation(childInformation);
@@ -1243,13 +1249,14 @@ public class AdoptionServiceImpl implements AdoptionService {
 			workflowUpdateModel.setIsDraft(request.getIsDraft());
 
 			Map<String, Object> resultMap = adoptionRepositoryCustom.updateWorkflowDetails(workflowUpdateModel);
-			
+
 			if (workflowUpdateModel.getNextStatusId() != null
 					&& workflowUpdateModel.getNextStatusId() == Integer.valueOf(CommonConstants.APP_APPROVED_STATUS)) {
 				if (request.getGeneralInformation().getApplicationTypeCode() != null && request.getGeneralInformation()
 						.getApplicationTypeCode().equalsIgnoreCase(CommonConstants.ADOPTION_REGISTRATION)) {
-					
-					List<ApprovedAdoptionRegistrationDetails> approveAdoptionRegistration = adoptionRepositoryCustom.approveAdoptionRegistration(workflowUpdateModel);
+
+					List<ApprovedAdoptionRegistrationDetails> approveAdoptionRegistration = adoptionRepositoryCustom
+							.approveAdoptionRegistration(workflowUpdateModel);
 					response.setResponseObject(approveAdoptionRegistration);
 				}
 			}
