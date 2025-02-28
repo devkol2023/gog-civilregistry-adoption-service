@@ -154,17 +154,16 @@ public class AdoptionController {
 		return response;
 	}
 
-	
 	@PostMapping("/searchApplicationAC")
 	public ServiceResponse searchApplicationAC(@RequestBody SearchApplicationACRequest request) {
 		return adoptionService.searchApplicationAC(request);
 	}
-	
+
 	@PostMapping("/searchACDownload")
 	public ServiceResponse searchACDownload(@RequestBody ACDownloadRequest request) {
 		return adoptionService.searchACDownload(request);
 	}
-	
+
 	@PostMapping("/submitAdoptionCertificate")
 	public ServiceResponse submitAdoptionCertificate(
 			@RequestParam(value = "attachments", required = false) MultipartFile[] attachments, String request) {
@@ -178,10 +177,14 @@ public class AdoptionController {
 		}
 		return response;
 	}
-	
+
 	@PostMapping("/getApplyBirthCertificateList")
 	public ServiceResponse getApplyBirthCertificateList(@RequestBody ApplyBirthCertificateRequest request) {
 		return adoptionService.getApplyBirthCertificateList(request);
 	}
 
+//	@PostMapping("/getAdoptionCertificateDetails")
+//	public ServiceResponse getAdoptionCertificateDetails(@RequestBody GeneralInformation request) {
+//		return adoptionService.getAdoptionCertificateDetails(request);
+//	}
 }
