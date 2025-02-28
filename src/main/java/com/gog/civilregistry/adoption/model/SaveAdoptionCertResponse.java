@@ -6,8 +6,9 @@ import lombok.Data;
 
 @Data
 public class SaveAdoptionCertResponse {
-	
+
 	private AdoptionCertInformation adoptionCertInformation;
+	private Object adoptionRegistrationInformation;
 	private List<UploadFileData> uploadFileData;
 	private WorkflowInformation workflowInformation;
 	private Integer isDraft;

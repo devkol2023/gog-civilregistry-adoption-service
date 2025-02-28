@@ -5,9 +5,10 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import com.gog.civilregistry.adoption.entity.ApplicationAdoptionCertificateDetailEntity;
 
-public interface ApplicationAdoptionCertificateDetailRepository extends JpaRepository<ApplicationAdoptionCertificateDetailEntity, Long>,
-JpaSpecificationExecutor<ApplicationAdoptionCertificateDetailEntity> {
-	
-	
+public interface ApplicationAdoptionCertificateDetailRepository
+		extends JpaRepository<ApplicationAdoptionCertificateDetailEntity, Long>,
+		JpaSpecificationExecutor<ApplicationAdoptionCertificateDetailEntity> {
+
+	ApplicationAdoptionCertificateDetailEntity findByApplicationRegisterId(Long applicationRegisterId);
 
 }

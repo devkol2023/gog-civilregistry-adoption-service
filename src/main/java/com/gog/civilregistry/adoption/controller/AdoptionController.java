@@ -183,8 +183,8 @@ public class AdoptionController {
 		return adoptionService.getApplyBirthCertificateList(request);
 	}
 
-//	@PostMapping("/getAdoptionCertificateDetails")
-//	public ServiceResponse getAdoptionCertificateDetails(@RequestBody GeneralInformation request) {
-//		return adoptionService.getAdoptionCertificateDetails(request);
-//	}
+	@PostMapping("/getAdoptionCertificateDetails")
+	public ServiceResponse getAdoptionCertificateDetails(@RequestBody GeneralInformation request) {
+		return adoptionService.getAdoptionCertificateDetails(request);
+	}
 }

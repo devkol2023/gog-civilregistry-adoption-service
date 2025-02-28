@@ -29,21 +29,23 @@ public interface AdoptionService {
 	ServiceResponse getDocList(DocListRequest request);
 
 	ServiceResponse searchApplicationAR(SearchApplicationARRequest request);
-	
+
 	ServiceResponse searchApplicationAC(SearchApplicationACRequest request);
-	
+
 	ServiceResponse searchACDownload(ACDownloadRequest request);
 
 	ServiceResponse trackAppUser(TrackAppUserRequest request);
 
 	ServiceResponse getVault(VaultRequest request);
-	
+
 	ServiceResponse getApplyBirthCertificateList(ApplyBirthCertificateRequest request);
 
 	ServiceResponse saveAndSubmitByDepartmentUsers(MultipartFile[] attachments, String request);
 
 	ServiceResponse getChildDetailsForAdoption(ChildInformation request);
-	
+
 	ServiceResponse submitAdoptionCertificate(MultipartFile[] attachments, String request);
+
+	ServiceResponse getAdoptionCertificateDetails(GeneralInformation request);
 
 }
