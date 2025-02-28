@@ -1413,7 +1413,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 				processNod.setApplicationTypeId(request.getAdoptionCertInformation().getApplicationTypeId());
 				processNod.setParishId(request.getAdoptionCertInformation().getMotherParish());
 				processNod.setStatusId(workflowInfoRequest.getNextStatusId());
-				processNod.setCitizenId(null);
+				processNod.setCitizenId(request.getAdoptionCertInformation().getChildCitizenId());
 				// processNod.setApplicationRegisterId(applicationRegisterEntity.getApplicationRegisterId());
 
 				Map<String, Object> resultMap = adoptionRepositoryCustom.createNewApplication(processNod);

@@ -14,6 +14,7 @@ public class AdoptionCertInformation {
 	private Long applicationAdoptionId;
 	private Long applicationRegisterId;
 	private Integer motherParish;
+	private Integer childCitizenId;
 	private float feesPerCopy;
 	private Short noOfCopies;
 	private String paymentMode;
