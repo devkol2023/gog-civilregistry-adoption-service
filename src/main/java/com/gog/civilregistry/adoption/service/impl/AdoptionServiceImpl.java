@@ -231,12 +231,10 @@ public class AdoptionServiceImpl implements AdoptionService {
 //				processNod.setParishId(3);
 				processAr.setStatusId(currentStatusId);
 				processAr.setUserId(workflowInfoRequest.getAssignedByUserId());
-				if (request.getMotherInformation().getMotherParish() != null)
-					processAr.setParishId(request.getMotherInformation().getMotherParish());
-				else
-					processAr.setParishId(request.getGeneralInformation().getInstituteParish());
+				processAr.setParishId(request.getMotherInformation().getMotherParish());
+				
 
-				processAr.setCitizenId(null);
+				processAr.setCitizenId(request.getChildInformation().getChildCitizenId());
 				// processNod.setCivilRegistryNumber(null);
 				// processNod.setApplicationRegisterId(applicationRegisterEntity.getApplicationRegisterId());
 
@@ -696,12 +694,10 @@ public class AdoptionServiceImpl implements AdoptionService {
 				// processNod.setRoleId(2);
 				processNod.setUserId(request.getLoginUserId());
 				processNod.setApplicationTypeId(request.getGeneralInformation().getApplicationTypeId());
-				if (request.getMotherInformation().getMotherParish() != null)
-					processNod.setParishId(request.getMotherInformation().getMotherParish());
-				else
-					processNod.setParishId(request.getGeneralInformation().getInstituteParish());
+				processNod.setParishId(request.getMotherInformation().getMotherParish());
+				
 				processNod.setStatusId(workflowInfoRequest.getNextStatusId());
-				processNod.setCitizenId(null);
+				processNod.setCitizenId(request.getChildInformation().getChildCitizenId());
 				// processNod.setApplicationRegisterId(applicationRegisterEntity.getApplicationRegisterId());
 
 				Map<String, Object> resultMap = adoptionRepositoryCustom.createNewApplication(processNod);
