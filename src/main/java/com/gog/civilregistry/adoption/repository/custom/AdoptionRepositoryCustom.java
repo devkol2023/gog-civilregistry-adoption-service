@@ -333,90 +333,94 @@ public class AdoptionRepositoryCustom {
 	    StringBuilder sqlQuery = new StringBuilder();
 
 	    sqlQuery.append("SELECT DISTINCT ")
-	        .append("tar.application_no AS applicationNo, ")
+        .append("tar.application_no AS applicationNo, ")
+        .append("mc.civil_registry_number AS childCivilRegistryId, ")
 
-	        .append("CASE ")
-	        .append("    WHEN mat.application_type_code = 'AR' THEN ")
-	        .append("        concat_ws(', ', taad.child_surname, concat_ws(' ', taad.child_first_name, taad.child_middle_name)) ")
-	        .append("    WHEN mat.application_type_code = 'AC' THEN ")
-	        .append("        concat_ws(', ', taad_ac.child_surname, concat_ws(' ', taad_ac.child_first_name, taad_ac.child_middle_name)) ")
-	        .append("END AS childName, ")
+        .append("CASE ")
+        .append("    WHEN mat.application_type_code = 'AR' THEN ")
+        .append("        concat_ws(', ', taad.child_surname, concat_ws(' ', taad.child_first_name, taad.child_middle_name)) ")
+        .append("    WHEN mat.application_type_code = 'AC' THEN ")
+        .append("        concat_ws(', ', taad_ac.child_surname, concat_ws(' ', taad_ac.child_first_name, taad_ac.child_middle_name)) ")
+        .append("END AS childName, ")
 
-	        .append("CASE ")
-	        .append("    WHEN mat.application_type_code = 'AR' THEN ")
-	        .append("        concat_ws(', ', taad.mother_surname, concat_ws(' ', taad.mother_first_name, taad.mother_middle_name)) ")
-	        .append("    WHEN mat.application_type_code = 'AC' THEN ")
-	        .append("        concat_ws(', ', taad_ac.mother_surname, concat_ws(' ', taad_ac.mother_first_name, taad_ac.mother_middle_name)) ")
-	        .append("END AS motherName, ")
+        .append("CASE ")
+        .append("    WHEN mat.application_type_code = 'AR' THEN ")
+        .append("        concat_ws(', ', taad.mother_surname, concat_ws(' ', taad.mother_first_name, taad.mother_middle_name)) ")
+        .append("    WHEN mat.application_type_code = 'AC' THEN ")
+        .append("        concat_ws(', ', taad_ac.mother_surname, concat_ws(' ', taad_ac.mother_first_name, taad_ac.mother_middle_name)) ")
+        .append("END AS motherName, ")
 
-	        .append("CASE ")
-	        .append("    WHEN mat.application_type_code = 'AR' THEN ")
-	        .append("        concat_ws(', ', taad.father_surname, concat_ws(' ', taad.father_first_name, taad.father_middle_name)) ")
-	        .append("    WHEN mat.application_type_code = 'AC' THEN ")
-	        .append("        concat_ws(', ', taad_ac.father_surname, concat_ws(' ', taad_ac.father_first_name, taad_ac.father_middle_name)) ")
-	        .append("END AS fatherName, ")
+        .append("CASE ")
+        .append("    WHEN mat.application_type_code = 'AR' THEN ")
+        .append("        concat_ws(', ', taad.father_surname, concat_ws(' ', taad.father_first_name, taad.father_middle_name)) ")
+        .append("    WHEN mat.application_type_code = 'AC' THEN ")
+        .append("        concat_ws(', ', taad_ac.father_surname, concat_ws(' ', taad_ac.father_first_name, taad_ac.father_middle_name)) ")
+        .append("END AS fatherName, ")
 
-	        .append("CASE ")
-	        .append("    WHEN mat.application_type_code = 'AR' THEN TO_CHAR(taad.child_date_of_birth, 'DD/MM/YYYY') ")
-	        .append("    WHEN mat.application_type_code = 'AC' THEN TO_CHAR(taad_ac.child_date_of_birth, 'DD/MM/YYYY') ")
-	        .append("END AS dateOfBirth, ")
+        .append("CASE ")
+        .append("    WHEN mat.application_type_code = 'AR' THEN TO_CHAR(taad.child_date_of_birth, 'DD/MM/YYYY') ")
+        .append("    WHEN mat.application_type_code = 'AC' THEN TO_CHAR(taad_ac.child_date_of_birth, 'DD/MM/YYYY') ")
+        .append("END AS dateOfBirth, ")
 
-	        .append("mws.display_stage_name AS status, ")
-	        .append("mat.application_type_name AS applicationType ")
+        .append("mws.display_stage_name AS status, ")
+        .append("mat.application_type_name AS applicationType ")
 
-	        .append("FROM applications.t_application_workflow taw ")
-	        .append("INNER JOIN applications.t_application_register tar ")
-	        .append("ON taw.application_register_id = tar.application_register_id ")
-	        .append("INNER JOIN masters.m_application_type mat ")
-	        .append("ON tar.application_type_id = mat.application_type_id ")
-	        .append("INNER JOIN masters.m_workflow_stage mws ")
-	        .append("ON taw.stage_id = mws.stage_id ")
+        .append("FROM applications.t_application_workflow taw ")
+        .append("INNER JOIN applications.t_application_register tar ")
+        .append("ON taw.application_register_id = tar.application_register_id ")
+        .append("INNER JOIN masters.m_application_type mat ")
+        .append("ON tar.application_type_id = mat.application_type_id ")
+        .append("INNER JOIN masters.m_workflow_stage mws ")
+        .append("ON taw.stage_id = mws.stage_id ")
 
-	        // Join for application type 'AR'
-	        .append("LEFT JOIN adoption.t_application_adoption_details taad ")
-	        .append("ON tar.application_register_id = taad.application_register_id ")
-	        .append("AND mat.application_type_code = 'AR' ")
+        // Join for application type 'AR'
+        .append("LEFT JOIN adoption.t_application_adoption_details taad ")
+        .append("ON tar.application_register_id = taad.application_register_id ")
+        .append("AND mat.application_type_code = 'AR' ")
 
-	        // Join for application type 'AC'
-	        .append("LEFT JOIN adoption.t_application_adoption_certificate_details taac ")
-	        .append("ON tar.application_register_id = taac.application_register_id ")
-	        .append("AND taac.is_active = true ")
-	        .append("AND mat.application_type_code = 'AC' ")
+        // Join for application type 'AC'
+        .append("LEFT JOIN adoption.t_application_adoption_certificate_details taac ")
+        .append("ON tar.application_register_id = taac.application_register_id ")
+        .append("AND taac.is_active = true ")
+        .append("AND mat.application_type_code = 'AC' ")
 
-	        .append("LEFT JOIN adoption.t_application_adoption_details taad_ac ")
-	        .append("ON taac.application_adoption_id = taad_ac.application_adoption_id ")
-	        .append("AND taad_ac.is_active = true ")
-	        .append("AND mat.application_type_code = 'AC' ")
+        .append("LEFT JOIN adoption.t_application_adoption_details taad_ac ")
+        .append("ON taac.application_adoption_id = taad_ac.application_adoption_id ")
+        .append("AND taad_ac.is_active = true ")
+        .append("AND mat.application_type_code = 'AC' ")
 
-	        .append("WHERE (taw.assigned_from_user = :loggedInUserId OR taw.assigned_to_user = :loggedInUserId) ")
-	        .append("AND taw.is_active = true ")
-	        .append("AND tar.is_active = true ")
-	        .append("AND mws.is_active = true ")
-	        .append("AND mat.module_code = 'ADOPTION' ")
-	        .append("AND mat.application_type_code IN ('AR', 'AC') ")
-	        .append("AND taw.stage_id <> 1; ");
+        // Join to fetch child's civil registry ID
+        .append("LEFT JOIN citizen.t_manage_citizen mc ")
+        .append("ON mc.citizen_id = COALESCE(taad.child_citizen_id, taad_ac.child_citizen_id) ")
 
-	    Query query = entityManager.createNativeQuery(sqlQuery.toString());
+        .append("WHERE (taw.assigned_from_user = :loggedInUserId OR taw.assigned_to_user = :loggedInUserId) ")
+        .append("AND taw.is_active = true ")
+        .append("AND tar.is_active = true ")
+        .append("AND mws.is_active = true ")
+        .append("AND mat.module_code = 'ADOPTION' ")
+        .append("AND mat.application_type_code IN ('AR', 'AC') ")
+        .append("AND taw.stage_id <> 1; ");
 
-	    query.setParameter("loggedInUserId", loggedInUserId);
+    Query query = entityManager.createNativeQuery(sqlQuery.toString());
 
-	    List<Object[]> resultList = query.getResultList();
+    query.setParameter("loggedInUserId", loggedInUserId);
 
-	    List<TrackAppUserDto> trackApplicationUserList = resultList.stream().map(result -> {
-	        Object[] row = (Object[]) result;
-	        TrackAppUserDto dto = new TrackAppUserDto();
-	        dto.setApplicationNo(row[0] != null ? (String) row[0] : "");
-	        dto.setChildName(row[1] != null ? (String) row[1] : "");
-	        dto.setMotherName(row[2] != null ? (String) row[2] : "");
-	        dto.setFatherName(row[3] != null ? (String) row[3] : "");
-	        dto.setDateOfBirth(row[4] != null ? (String) row[4] : "");
-	        dto.setStatus(row[5] != null ? (String) row[5] : "");
-	        dto.setApplicationType(row[6] != null ? (String) row[6] : "");
-	        return dto;
-	    }).collect(Collectors.toList());
+    List<Object[]> resultList = query.getResultList();
 
-	    return trackApplicationUserList;
-	}
+    return resultList.stream().map(result -> {
+        Object[] row = result;
+        TrackAppUserDto dto = new TrackAppUserDto();
+        dto.setApplicationNo(row[0] != null ? (String) row[0] : "");
+        dto.setChildCivilRegistryId(row[1] != null ? (String) row[1] : "");
+        dto.setChildName(row[2] != null ? (String) row[2] : "");
+        dto.setMotherName(row[3] != null ? (String) row[3] : "");
+        dto.setFatherName(row[4] != null ? (String) row[4] : "");
+        dto.setDateOfBirth(row[5] != null ? (String) row[5] : "");
+        dto.setStatus(row[6] != null ? (String) row[6] : "");
+        dto.setApplicationType(row[7] != null ? (String) row[7] : "");
+        return dto;
+    }).collect(Collectors.toList());
+ }
 
 
 	public List<SearchApplicationACDto> searchApplicationAC(
