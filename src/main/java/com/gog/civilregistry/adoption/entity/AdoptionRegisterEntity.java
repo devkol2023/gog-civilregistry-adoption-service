@@ -2,6 +2,7 @@ package com.gog.civilregistry.adoption.entity;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.Date;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,6 +11,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 import lombok.Data;
 
 /**
@@ -66,6 +69,10 @@ public class AdoptionRegisterEntity implements Serializable {
 
 	@Column(name = "updated_on")
 	private Timestamp updatedOn;
+	
+	@Column(name="adoption_certificate_approval_date")
+	@Temporal(TemporalType.DATE)
+	private Date adoptionCertificateApprovalDate;
 
 	public AdoptionRegisterEntity() {
 	}
