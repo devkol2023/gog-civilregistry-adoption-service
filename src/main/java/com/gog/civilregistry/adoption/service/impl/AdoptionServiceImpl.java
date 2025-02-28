@@ -231,7 +231,11 @@ public class AdoptionServiceImpl implements AdoptionService {
 //				processNod.setParishId(3);
 				processAr.setStatusId(currentStatusId);
 				processAr.setUserId(workflowInfoRequest.getAssignedByUserId());
-				processAr.setParishId(request.getGeneralInformation().getInstituteParish());
+				if (request.getMotherInformation().getMotherParish() != null)
+					processAr.setParishId(request.getMotherInformation().getMotherParish());
+				else
+					processAr.setParishId(request.getGeneralInformation().getInstituteParish());
+
 				processAr.setCitizenId(null);
 				// processNod.setCivilRegistryNumber(null);
 				// processNod.setApplicationRegisterId(applicationRegisterEntity.getApplicationRegisterId());
@@ -692,7 +696,10 @@ public class AdoptionServiceImpl implements AdoptionService {
 				// processNod.setRoleId(2);
 				processNod.setUserId(request.getLoginUserId());
 				processNod.setApplicationTypeId(request.getGeneralInformation().getApplicationTypeId());
-				processNod.setParishId(request.getGeneralInformation().getInstituteParish());
+				if (request.getMotherInformation().getMotherParish() != null)
+					processNod.setParishId(request.getMotherInformation().getMotherParish());
+				else
+					processNod.setParishId(request.getGeneralInformation().getInstituteParish());
 				processNod.setStatusId(workflowInfoRequest.getNextStatusId());
 				processNod.setCitizenId(null);
 				// processNod.setApplicationRegisterId(applicationRegisterEntity.getApplicationRegisterId());
