@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gog.civilregistry.adoption.model.ApprovedAdoptionCertDetails;
 import com.gog.civilregistry.adoption.model.ApprovedAdoptionRegistrationDetails;
 import com.gog.civilregistry.adoption.model.ProcessApplicationModel;
 import com.gog.civilregistry.adoption.model.SearchApplicationACDto;
@@ -542,6 +543,45 @@ public class AdoptionRepositoryCustom {
 			// ApprovedBCDetails objects
 			approvedDetails = objectMapper.readValue(jsonResponse,
 					objectMapper.getTypeFactory().constructCollectionType(List.class, ApprovedAdoptionRegistrationDetails.class));
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+
+		return approvedDetails;
+
+	}
+	
+	public List<ApprovedAdoptionCertDetails> approveAdoptionCertificate(WorkflowUpdateModel workflowUpdateModel) {
+		StoredProcedureQuery storedProcedure = entityManager
+				.createStoredProcedureQuery("adoption.sp_application_approve_ac");
+
+		storedProcedure.registerStoredProcedureParameter("p_application_register_id", Long.class, ParameterMode.IN);
+		storedProcedure.setParameter("p_application_register_id", workflowUpdateModel.getApplicationRegisterId());
+
+		storedProcedure.registerStoredProcedureParameter("p_current_user_id", Integer.class, ParameterMode.IN);
+		storedProcedure.setParameter("p_current_user_id", workflowUpdateModel.getAssignedByUserId());
+
+		storedProcedure.registerStoredProcedureParameter("re_code", String.class, ParameterMode.OUT);
+		storedProcedure.setParameter("re_code", "0");
+
+		storedProcedure.registerStoredProcedureParameter("re_msg", String.class, ParameterMode.OUT);
+		storedProcedure.setParameter("re_msg", "resmessage");
+
+		// Execute the stored procedure
+		storedProcedure.execute();
+
+		// Get the output parameters
+		String reCode = (String) storedProcedure.getOutputParameterValue("re_code");
+		String jsonResponse = (String) storedProcedure.getOutputParameterValue("re_msg");
+
+		List<ApprovedAdoptionCertDetails> approvedDetails = null;
+
+		try {
+			// Use ObjectMapper to convert the JSON string into a list of
+			// ApprovedBCDetails objects
+			approvedDetails = objectMapper.readValue(jsonResponse,
+					objectMapper.getTypeFactory().constructCollectionType(List.class, ApprovedAdoptionCertDetails.class));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;

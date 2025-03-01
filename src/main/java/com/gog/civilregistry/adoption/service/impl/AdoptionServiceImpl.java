@@ -1,6 +1,8 @@
 package com.gog.civilregistry.adoption.service.impl;
 
+import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,6 +24,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gog.civilregistry.adoption.dto.GenerateAdoptionCertificateDTO;
 import com.gog.civilregistry.adoption.dto.GetCivilRegistryNumberDTO;
 import com.gog.civilregistry.adoption.entity.AdoptionApplicationDocumentEntity;
 import com.gog.civilregistry.adoption.entity.ApplicationAdoptionCertificateDetailEntity;
@@ -34,9 +37,11 @@ import com.gog.civilregistry.adoption.model.AdoptionCertInformation;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatus;
 import com.gog.civilregistry.adoption.model.ApplicationTrackStatusResponse;
 import com.gog.civilregistry.adoption.model.ApplyBirthCertificateRequest;
+import com.gog.civilregistry.adoption.model.ApprovedAdoptionCertDetails;
 import com.gog.civilregistry.adoption.model.ApprovedAdoptionRegistrationDetails;
 import com.gog.civilregistry.adoption.model.BirthCertificateApplicationResponseProjection;
 import com.gog.civilregistry.adoption.model.BirthCertificateApplyListResponse;
+import com.gog.civilregistry.adoption.model.ByteArrayMultipartFile;
 import com.gog.civilregistry.adoption.model.ChildAdoptionDetailsProjection;
 import com.gog.civilregistry.adoption.model.ChildInformation;
 import com.gog.civilregistry.adoption.model.DeletedFileListModel;
@@ -45,6 +50,7 @@ import com.gog.civilregistry.adoption.model.DocListRequest;
 import com.gog.civilregistry.adoption.model.DocListResponse;
 import com.gog.civilregistry.adoption.model.FatherInformation;
 import com.gog.civilregistry.adoption.model.GeneralInformation;
+import com.gog.civilregistry.adoption.model.GenerateAdoptionCertificateRequest;
 import com.gog.civilregistry.adoption.model.MotherInformation;
 import com.gog.civilregistry.adoption.model.NewFileUploadResponse;
 import com.gog.civilregistry.adoption.model.ProcessApplicationModel;
@@ -79,6 +85,25 @@ import com.gog.civilregistry.adoption.service.AdoptionService;
 import com.gog.civilregistry.adoption.service.DMSService;
 import com.gog.civilregistry.adoption.service.IntegrationApiService;
 import com.gog.civilregistry.adoption.util.CommonConstants;
+import com.gog.civilregistry.adoption.model.UpdateCertificateFileRequest;
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Chunk;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.Image;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.html.WebColors;
+import com.itextpdf.text.pdf.BarcodeQRCode;
+import com.itextpdf.text.pdf.PdfContentByte;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -117,6 +142,18 @@ public class AdoptionServiceImpl implements AdoptionService {
 
 	@Autowired
 	ApplicationAdoptionCertificateDetailRepository applicationAdoptionCertRepository;
+	
+	@Autowired
+	AdoptionRepositoryCustom adoptionRepositoryCustom;
+
+	@Autowired
+	AdoptionApplicationDocumentRepository documentRepository;
+
+	@Autowired
+	ApplicationRegisterRepository applicationRegisterRepository;
+
+	@Autowired
+	ApplicationAdoptionDetailRepository adoptionDetailRepository;
 
 	@Override
 	public ServiceResponse trackApplicationStatus(ApplicationTrackStatus request) {
@@ -172,17 +209,7 @@ public class AdoptionServiceImpl implements AdoptionService {
 		return response;
 	}
 
-	@Autowired
-	AdoptionRepositoryCustom adoptionRepositoryCustom;
-
-	@Autowired
-	AdoptionApplicationDocumentRepository documentRepository;
-
-	@Autowired
-	ApplicationRegisterRepository applicationRegisterRepository;
-
-	@Autowired
-	ApplicationAdoptionDetailRepository adoptionDetailRepository;
+	
 
 	@Override
 	@Transactional(rollbackFor = Exception.class)
@@ -1264,6 +1291,44 @@ public class AdoptionServiceImpl implements AdoptionService {
 							.approveAdoptionRegistration(workflowUpdateModel);
 					response.setResponseObject(approveAdoptionRegistration);
 				}
+				
+				if (request.getGeneralInformation().getApplicationTypeCode() != null && request.getGeneralInformation()
+						.getApplicationTypeCode().equalsIgnoreCase(CommonConstants.ADOPTION_CERTIFICATE)) {
+					
+					List<ApprovedAdoptionCertDetails> approveAdoptionCertificate = adoptionRepositoryCustom.approveAdoptionCertificate(workflowUpdateModel);
+					
+					List<GenerateAdoptionCertificateDTO> certificateDetailsList = applicationAdoptionCertRepository.fetchAdoptionCertificateDetails(request.getGeneralInformation().getApplicationRegisterId());
+
+					GenerateAdoptionCertificateDTO certificateDetails = certificateDetailsList.get(0);
+					
+					GenerateAdoptionCertificateRequest generateAdoptionCertificateRequest = new GenerateAdoptionCertificateRequest();
+					generateAdoptionCertificateRequest.setApplicationRegisterId(request.getGeneralInformation().getApplicationRegisterId());
+					
+					MultipartFile adoptionCertToUpload = generateAdoptionCertificate(certificateDetails, "CREATE");
+				    
+					 MultipartFile[] fileToUpload = new MultipartFile[1];
+					 fileToUpload[0] = adoptionCertToUpload;
+					 NewFileUploadResponse fileUploadResponse = dmsService.uploadFileToAlfresco(fileToUpload);
+					 dmsReferenceId = fileUploadResponse.getFileUploadResponse().get(0);
+					 
+					 UpdateCertificateFileRequest updateCertificateFileRequest = new UpdateCertificateFileRequest();
+					 updateCertificateFileRequest.setCitizenId(request.getChildInformation().getChildCitizenId());
+					 updateCertificateFileRequest.setCurrentUserId(request.getWorkflowInformation().getAssignedByUserId());
+					 updateCertificateFileRequest.setApplicationTypeCode(request.getGeneralInformation().getApplicationTypeCode());
+					 updateCertificateFileRequest.setDmsRefId(dmsReferenceId);
+				     
+					 Map<String, Object> result = adoptionRepositoryCustom.updateCertificateFile(updateCertificateFileRequest);
+                     String retcode = (String) result.get("re_code");
+                     String retmsg = (String) result.get("re_msg");
+
+						if (retcode != null && !retcode.equals("")) {
+							if (!retcode.equals("0")) {
+								throw new RuntimeException("Unable to update Marriage License");
+							}
+						}	
+					
+					response.setResponseObject(approveAdoptionCertificate);
+				}
 			}
 
 			SaveARDraftResponse responseObj = new SaveARDraftResponse();
@@ -1708,5 +1773,730 @@ public class AdoptionServiceImpl implements AdoptionService {
 		logger.info("Exit Method " + " getAdoptionCertificateDetails");
 		return response;
 	}
+	
+
+	public MultipartFile generateAdoptionCertificate(GenerateAdoptionCertificateDTO certificateDetails, String flag) {
+		logger.info("Entry Method " + "downloadMarriageCertificate");
+		String dmsReferenceId = null;
+		Document document = new Document(PageSize.A4);
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		MultipartFile adoptionCertToUpload = null;
+		try {
+			
+			//String flag = "CREATE";
+			
+			//List<GenerateAdoptionCertificateDTO> certificateDetailsList = applicationAdoptionCertRepository.fetchAdoptionCertificateDetails(request.getApplicationRegisterId());
+
+
+			//GenerateAdoptionCertificateDTO certificateDetails = certificateDetailsList.get(0);
+
+			 //System.out.println("birthCertificateDetails.getBirthRegNumber()->"+birthCertificateDetails.getBirthRegNumber());
+
+			PdfWriter writer = PdfWriter.getInstance(document, out);
+			document.open();
+
+			Rectangle rect = new Rectangle(577, 825, 18, 15); // you can resize rectangle
+			rect.enableBorderSide(1);
+			rect.enableBorderSide(2);
+			rect.enableBorderSide(4);
+			rect.enableBorderSide(8);
+			rect.setBorderColor(BaseColor.BLACK);
+			rect.setBorderWidth(1);
+			document.add(rect);
+
+			PdfContentByte cb = writer.getDirectContent();
+			// Add Text to PDF file ->
+			Font font = FontFactory.getFont("Arial", 14, Font.BOLD, BaseColor.BLACK);
+			Font font1 = FontFactory.getFont("Arial", 10, Font.BOLD | Font.UNDERLINE | Font.ITALIC, BaseColor.BLACK);
+			Font font2 = FontFactory.getFont("Arial", 10, Font.BOLD | Font.UNDERLINE, BaseColor.BLACK);
+			Font font3 = FontFactory.getFont("Arial", 10, BaseColor.BLACK);
+			Font font4 = FontFactory.getFont("Arial", 8, Font.BOLD | Font.UNDERLINE, BaseColor.BLACK);
+			Font font5 = FontFactory.getFont("Arial", 10, Font.BOLDITALIC, BaseColor.BLACK);
+			Font font6 = FontFactory.getFont("Arial", 9, BaseColor.BLACK);
+			Font font7 = FontFactory.getFont("Arial", 9, Font.BOLD, BaseColor.BLACK);
+			Font font8 = FontFactory.getFont("Arial", 10, Font.BOLD | Font.UNDERLINE, BaseColor.BLACK);
+
+			Font font9 = FontFactory.getFont("Arial", 12, Font.BOLD | Font.UNDERLINE, BaseColor.BLACK);
+			
+			Font font11 = FontFactory.getFont("Arial", 12, Font.BOLD, BaseColor.BLACK);
+
+			Font font10 = FontFactory.getFont("Arial", 9, Font.BOLD, BaseColor.RED);
+
+			String imageFile = "/opt/graneda-logo.png";
+			String image_header = "/opt/birth-certi-header.png";
+			String image_sig = "/opt/sample_sign.png";
+
+			Phrase phrase = new Phrase();
+			PdfPCell cell = new PdfPCell();
+			PdfPTable table = new PdfPTable(new float[] { 70, 30 });
+			table.setWidthPercentage(100);
+
+			SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+
+			// cell = new PdfPCell();
+			// cell.setBorder(1);
+			// table.addCell(cell);
+
+			// Write QR code here
+
+			String barcode_str = "Country Name: Grenada" + "\n" + "Certificate Type: Adoption Certificate" + "\n"
+					+ "Name: " + certificateDetails.getChild_name() + "\n" + "Adoption Certificate Number: "
+					+ certificateDetails.getAdoption_certificate_number();
+
+			if (flag != null && flag != "PREVIEW") {
+				BarcodeQRCode qrcode = new BarcodeQRCode(barcode_str.trim(), 1, 1, null);
+				Image qrcodeImage = qrcode.getImage();
+				qrcodeImage.setAbsolutePosition(50f, 145f);
+				qrcodeImage.scaleToFit(70f, 85f);
+				document.add(qrcodeImage);
+				// qrcodeImage.scalePercent(200);
+
+				/*
+				 * cell = new PdfPCell(); qrcodeImage.scaleToFit(100f, 115f);
+				 * cell.addElement(qrcodeImage); cell.setBorder(0); table.addCell(cell);
+				 */
+			}
+
+			// End QR code
+
+			cell = new PdfPCell();
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			try {
+				Image img = Image.getInstance(imageFile);
+				img.scaleToFit(75f, 50f);
+				cell.setVerticalAlignment(Element.ALIGN_MIDDLE); // Vertically center the image
+				cell.setPaddingLeft(220);// Add some padding to the left to move the image slightly to the right
+				cell.addElement(img);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			table.addCell(cell);
+
+			// Barcode39 barcode39 = new Barcode39();
+			// barcode39.setCode(CommonUtils.generateRandomPassword(9));
+			// Image code39Image = barcode39.createImageWithBarcode(cb, null, null);
+
+			cell = new PdfPCell();
+			cell.setBorder(0);
+
+			if (flag != null && flag != "PREVIEW") {
+				cell.setPhrase(new Phrase(
+						"Adoption Certificate Number: " + certificateDetails.getAdoption_certificate_number(), font10));
+			}
+
+			table.addCell(cell);
+
+			document.add(table);
+
+			Paragraph para = new Paragraph("GOVERNMENT OF GRENADA", font);
+			para.setAlignment(Element.ALIGN_CENTER);
+			document.add(para);
+
+			para = new Paragraph("ADOPTION ORDINANCE, 1955", font9);
+			para.setAlignment(Element.ALIGN_CENTER);
+			document.add(para);
+
+			/*
+			 * para = new Paragraph("BIRTH CERTIFICATE", font);
+			 * para.setAlignment(Element.ALIGN_CENTER); document.add(para);
+			 */
+
+			// Commented: header for birth certificate
+			/*
+			 * try { // Image img = Image.getInstance(imageFile); Image img_header =
+			 * Image.getInstance(image_header); // img.setAbsolutePosition(0, 0); //
+			 * img.scaleToFit(100f, 125f); img_header.setAbsolutePosition(150, 620);
+			 * img_header.scaleToFit(300f, 125f); // cell.addElement(qrcodeImage);
+			 * document.add(img_header); } catch (Exception e) { e.printStackTrace(); }
+			 */
+			// end header
+
+			// document.add(Chunk.NEWLINE);
+
+			BaseColor myColor = WebColors.getRGBColor("#e3e1e1");
+
+			//document.add(new Paragraph("\n"));
+			//document.add(new Paragraph("\n"));
+			
+			//document.add(new Paragraph("Death Registered in the District of "+deathCertificateDetails.getDeath_registration_parish()+" in Grenada", font11));
+            
+			document.add(new Paragraph("\n"));
+			
+			PdfPTable table7 = new PdfPTable(new float[] { 45, 55 });
+			table7.setWidthPercentage(100);
+
+			// Set the border width for the top and bottom of the table
+			table7.getDefaultCell().setBorderWidthTop(2f); // 2f for top border thickness
+			table7.getDefaultCell().setBorderWidthBottom(2f); // 2f for bottom border thickness
+
+			cell = new PdfPCell();
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setPhrase(new Phrase("Entry Number", font3));
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			// cell.setBackgroundColor(myColor);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setPhrase(new Phrase(": " + certificateDetails.getEntry_no(), font3));
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			// cell.setBackgroundColor(myColor);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setPhrase(new Phrase("Name of Adopted Child as stated in Adoption Order", font3));
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setPhrase(new Phrase(": " + certificateDetails.getChild_name(), font3));
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// .setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase("Gender of Adopted Child", font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			// cell.setBackgroundColor(myColor);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase(": " + certificateDetails.getChild_gender(), font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			// cell.setBackgroundColor(myColor);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase("Name of Adopter (Father)", font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase(": " + certificateDetails.getFather_name(), font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase("Address of Adopter (Father)", font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			// cell.setBackgroundColor(myColor);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase(": " + certificateDetails.getFather_address(), font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			// cell.setBackgroundColor(myColor);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase("Occupation of Adopter (Father)", font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase(": " + certificateDetails.getFather_occupation(), font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			table7.addCell(cell);
+
+			//////////////
+			
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase("Name of Adopter (Mother)", font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase(": " + certificateDetails.getMother_name(), font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase("Address of Adopter (Mother)", font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			// cell.setBackgroundColor(myColor);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase(": " + certificateDetails.getMother_address(), font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			// cell.setBackgroundColor(myColor);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase("Occupation of Adopter (Mother)", font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase(": " + certificateDetails.getMother_occupation(), font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			table7.addCell(cell);
+			
+			
+			
+			////////////////////////
+			
+			
+			
+			
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase("Date of Birth", font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			// cell.setBackgroundColor(myColor);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase(": " + certificateDetails.getChild_date_of_birth(), font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			// cell.setBackgroundColor(myColor);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase("Place of Birth", font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase(": " + certificateDetails.getPlace_of_birth(), font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase("Date of Adoption Order", font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			// cell.setBackgroundColor(myColor);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase(": " + certificateDetails.getCourt_order_date(), font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			// cell.setBackgroundColor(myColor);
+			table7.addCell(cell);
+			
+			///////////////////////////////////////////////////////////
+			
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase("Entry Number in Birth Registration", font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			// cell.setBackgroundColor(myColor);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase(": " + certificateDetails.getNod_entry_no(), font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			// cell.setBackgroundColor(myColor);
+			table7.addCell(cell);
+			
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase("Birth Registration Number", font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			// cell.setBackgroundColor(myColor);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase(": " + "", font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			// cell.setBackgroundColor(myColor);
+			table7.addCell(cell);
+
+			
+			
+			
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase("Registration Number", font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			// cell.setBackgroundColor(myColor);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase(": " + certificateDetails.getAdoption_registration_number(), font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			// cell.setBackgroundColor(myColor);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase("Date of Issuance of Certificate", font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			// cell.setBackgroundColor(myColor);
+			table7.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase(": " + (certificateDetails.getAdoption_certificate_approval_date() == null ? ""
+					: certificateDetails.getAdoption_certificate_approval_date()), font3));
+			cell.setBorder(0);
+			// cell.setBorder(PdfPCell.TOP | PdfPCell.BOTTOM | PdfPCell.LEFT |
+			// PdfPCell.RIGHT);
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+			cell.setPadding(2);
+			// cell.setPaddingLeft(5);
+			cell.setFixedHeight(25);
+			// cell.setBackgroundColor(myColor);
+			table7.addCell(cell);
+
+			document.add(table7);
+
+			// document.add(new Paragraph("\n"));
+			
+			/*PdfPTable table9 = new PdfPTable(new float[] { 100 });
+			table9.setWidthPercentage(100);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase("", font3));
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setBorder(0);
+			table9.addCell(cell);
+
+			cell = new PdfPCell();
+			cell.setPhrase(new Phrase("", font3));
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setBorder(0);
+			table9.addCell(cell);
+			
+			cell = new PdfPCell();
+			
+			cell.setPhrase(new Phrase("Married at "+marriageCertificateDetails.getName_of_marriage_place()+
+					  " by (or before) me "+marriageCertificateDetails.getRegistrar_name()+" a Marriage Officer at the Parish of "+marriageCertificateDetails.getParish_of_marriage(), font3));
+
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setBorder(0);
+			table9.addCell(cell);
+			
+            cell = new PdfPCell();
+			
+			cell.setPhrase(new Phrase("This marriage was celebrated between us "+marriageCertificateDetails.getBride_name()+
+					  " and "+marriageCertificateDetails.getGroom_name()+" in the presenece of "+marriageCertificateDetails.getFirst_witness_name()+
+					  " and "+marriageCertificateDetails.getSecond_witness_name(), font3));
+
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setBorder(0);
+			table9.addCell(cell);
+
+			document.add(new Paragraph("\n"));
+			
+			document.add(table9);*/
+			
+
+			PdfPTable table8 = new PdfPTable(new float[] { 100 });
+			table8.setWidthPercentage(100);
+
+			/*cell = new PdfPCell();
+			cell.setPhrase(new Phrase("", font3));
+			cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			cell.setBorder(0);
+			table8.addCell(cell);*/
+
+
+			cell = new PdfPCell();
+
+			Integer approvedYear = LocalDate.now().getYear();
+
+			if (flag != null && flag != "PREVIEW") {
+				cell.setPhrase(new Phrase("I, " + certificateDetails.getApproved_by_user() + ", "
+						+ certificateDetails.getApproved_by_role()
+						+ " of General Births and Deaths for the states of Grenada certify that the above "
+						+ "is true extract from the Adopted Children Register in the said state for the year "+approvedYear, font3));
+
+				cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+				cell.setBorder(0);
+				table8.addCell(cell);
+
+				document.add(new Paragraph("\n"));
+
+				document.add(table8);
+
+				document.add(new Paragraph("\n"));
+				
+				  //document.add(new Paragraph("\n")); 
+				  //document.add(new Paragraph("\n"));
+				  document.add(new Paragraph("\n"));
+				  
+				  
+				  if (flag != null && flag != "PREVIEW") { 
+
+				PdfPTable table6 = new PdfPTable(new float[] { 70, 50 });
+				table6.setWidthPercentage(100);
+
+				cell = new PdfPCell();
+				cell.setPhrase(new Phrase("", font3));
+				cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+				cell.setBorder(0);
+				table6.addCell(cell);
+
+				cell = new PdfPCell();
+				cell.setBorder(1);
+				phrase = new Phrase();
+				phrase.add(new Chunk("ISSUING AUTHORITY", font3));
+				cell.addElement(phrase);
+				phrase = new Phrase();
+				phrase.add(new Chunk((certificateDetails.getApproved_by_user() == null ? ""
+						: certificateDetails.getApproved_by_user()), font3));
+				cell.addElement(phrase);
+				phrase = new Phrase();
+				phrase.add(new Chunk(certificateDetails.getApproved_by_role() == null ? ""
+						: certificateDetails.getApproved_by_role(), font5));
+				cell.addElement(phrase);
+				cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+				cell.setBorder(0);
+				table6.addCell(cell);
+
+				document.add(table6);
+				  }
+			}
+
+			/*
+			 * try { // Image img = Image.getInstance(imageFile); Image img_sign =
+			 * Image.getInstance(image_sig); // img.setAbsolutePosition(0, 0); //
+			 * img.scaleToFit(100f, 125f); img_sign.setAbsolutePosition(300, 100);
+			 * img_sign.scaleToFit(300f, 125f); // cell.addElement(qrcodeImage);
+			 * document.add(img_sign); } catch (Exception e) { e.printStackTrace(); }
+			 */
+
+			document.close();
+
+			byte[] byteArray = out.toByteArray();
+
+			adoptionCertToUpload = new ByteArrayMultipartFile(byteArray,
+					"Adoption_Certificate_" + ".pdf",
+					"application/pdf");
+			/*
+			 * MultipartFile[] fileToUpload = new MultipartFile[1]; fileToUpload[0] =
+			 * birthCertToUpload; NewFileUploadResponse fileUploadResponse =
+			 * dmsService.uploadFileToAlfresco(fileToUpload); dmsReferenceId =
+			 * fileUploadResponse.getFileUploadResponse().get(0);
+			 */
+			// Convert the byte array to a Base64 encoded string
+			// Base64.getEncoder().encodeToString(byteArray);
+
+			System.out.println("dmsReferenceId-->" + dmsReferenceId);
+
+		} catch (DocumentException e) {
+			e.printStackTrace();
+			logger.error(e.toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error(e.toString());
+		}
+		logger.info("Exit Method " + "generateMarriageCertificate");
+		return adoptionCertToUpload;
+		//return new ByteArrayInputStream(out.toByteArray());
+	}
+
 
 }
